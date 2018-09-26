@@ -3,7 +3,7 @@
 #'sobolSmthSpl' from the package 'sensitivity'. However, the core estimations
 #are my original work.
 
-sobolManifold <-
+TopSA <-
   function(Y,
            X,
            radius = 1,
