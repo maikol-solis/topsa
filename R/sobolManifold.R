@@ -141,8 +141,6 @@ estimate_index <- function (H) {
 constructHOMOLOGY <- function (Y, X, radius, dimension, alpha) {
   library(igraph)
   #DOC
-  #Estimates nonparametrically the regression curve across all the column of the
-  #matrix Y.
   #Arguments:
   #Y: matrix containing the response variable
   #X: matrix of inputs
@@ -152,14 +150,16 @@ constructHOMOLOGY <- function (Y, X, radius, dimension, alpha) {
   #CONTAINS
 
   lower_nbrs <- function(graph, node) {
-    nodeSet =  as.numeric(V(graph))
-    edgesreturn <- NULL
-    for (x in nodeSet) {
-      if (length(E(induced_subgraph(graph, c(x, node)))) == 1 &
-          node > x) {
-        edgesreturn <- c(edgesreturn, x)
-      }
-    }
+    n <- igraph::neighbors(graph, node)
+    edgesreturn <-  as.numeric(n[n < node])
+    # nodeSet =  as.numeric(V(graph))
+    # edgesreturn <- NULL
+    # for (x in nodeSet) {
+    #   if (length(E(induced_subgraph(graph, c(x, node)))) == 1 &
+    #       node > x) {
+    #     edgesreturn <- c(edgesreturn, x)
+    #   }
+    # }
     return(edgesreturn)
   }
 
@@ -193,7 +193,7 @@ constructHOMOLOGY <- function (Y, X, radius, dimension, alpha) {
     }
   }
 
-  create_homology_groups <- function(k,VR) {
+  create_homology_groups <- function(k, VR) {
     H <- sapply(VR, extract_vertices , k)
     H <- H[!sapply(H, is.null)]
     H <- do.call('rbind', H)
