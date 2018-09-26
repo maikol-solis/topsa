@@ -200,30 +200,72 @@ constructHOMOLOGY <- function (Y, X, radius, dimension, alpha) {
   }
 
   constructor <-
-    function(i, Ydat,Xdat,radius,dimension) {
+    function(i, Ydat, Xdat, radius, dimension, alpha) {
       Y <- Ydat
       X <- Xdat
 
-      neigborhood.distance <- as.matrix(dist(cbind(X[, i], Y[, i])))
-      adjacency.matrix <-
-        neigborhood.distance * (neigborhood.distance < radius)
+      Xr <- scales::rescale(X , to = c(0, 1))
+      Yr <- scales::rescale(Y , to = c(0, 1))
+      neigborhood.distance <- dist(cbind(Xr[, i], Yr))
+
+      #radius[i] <- fivenum(neigborhood.distance)[2]
+      # dY <- diff(range(Y))
+      # dX <- diff(range(X))
+      nd <- as.numeric(neigborhood.distance)
+
+      r <- quantile(nd, alpha)
+
+      #r <- as.numeric(fivenum(neigborhood.distance)[2])
+      #  if (dY >= dX) {
+      #    s <- dX / dY
+      #    r <-  m * s
+      # } else{
+      #   s <- dY / dX
+      #    r <- m * s
+      #  }
+
+
+      adjacency.matrix <- as.matrix(neigborhood.distance) <= r
       diag(adjacency.matrix) <- 0
 
       graphBase <-
         igraph::graph.adjacency(adjacency.matrix,
                                 mode = "undirected",
-                                weighted = TRUE)
+                                weighted = NULL)
       graphBase <-
         igraph::set_vertex_attr(graphBase, name = "x", value = X[, i])
       graphBase <-
-        igraph::set_vertex_attr(graphBase, name = "y", value = Y[, i])
+        igraph::set_vertex_attr(graphBase, name = "y", value = Y)
 
-      VR <- incremental_VR(graph = graphBase, k = dimension)
+      H <- list()
 
-      H <- lapply(X = 1:dimension, FUN = create_homology_groups, VR)
+      H[[1]] <-
+        as.integer(igraph::as_data_frame(graphBase, "vertices")[, "name"])
+      v <-
+        igraph::as_data_frame(graphBase, "edges")[, c("to", "from")]
+      v <-  data.matrix(v)
+      mode(v) <- "integer"
+      H[[2]] <-  v
+
+      for (d in 3:dimension) {
+        clq <- igraph::cliques(graphBase, min = d, max = d)
+        H[[d]] <- do.call("rbind", clq)
+      }
 
 
-      return(list(graph = graphBase, homology = H))
+      # VR <- incremental_VR(graph = graphBase, k = dimension)
+
+      # H <- lapply(X = 1:dimension, FUN = create_homology_groups, VR)
+
+
+      return(
+        list(
+          graph = graphBase,
+          homology = H,
+          neigborhood.distance = neigborhood.distance,
+          radius = r
+        )
+      )
 
 
     } #end-function-constructor
