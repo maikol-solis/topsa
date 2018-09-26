@@ -85,40 +85,60 @@ estimate_index <- function (H) {
   vv <- igraph::as_data_frame(H[["graph"]], "vertices")
   H2 <- H[["homology"]][[3]]
   l <- list()
-  H2 <- HOMOLOGY[["homology"]][[3]]
   idxObj <- sort(unique(as.numeric(H2)))
   Vertices <- data.frame (name = vv$name[idxObj],
-                          x = normalizeX(vv$x[idxObj]),
-                          y = normalizeX(vv$y[idxObj]))
+                          x = vv$x[idxObj],
+                          y = vv$y[idxObj])
 
-  for (i in 1:nrow(H2)) {
-    idxTriangle <- H2[i,]
-    idxname <- Vertices$name %in% c(idxTriangle, idxTriangle[1])
-    subVertices <-  Vertices[idxname , ]
-    subVertices <- rbind(subVertices, subVertices[1,])
-    Triangle <- as.matrix((subVertices[, c(2, 3)]))
-    p <- sp::Polygon(Triangle, hole = FALSE)
-    l[[i]] <- p
+  nc <-   parallel::detectCores() - 1
+
+  l <-  try(pbmcapply::pbmclapply(
+    X = 1:nrow(H2),
+    FUN = function(i) {
+      idxTriangle <- H2[i,]
+      idxname <- Vertices$name %in% c(idxTriangle, idxTriangle[1])
+      subVertices <-  Vertices[idxname , ]
+      subVertices <- rbind(subVertices, subVertices[1,])
+      Triangle <- as.matrix((subVertices[, c(2, 3)]))
+      p <- sp::Polygon(Triangle, hole = FALSE)
+    },
+    mc.cores = nc
+  ),
+  silent = T)
+
+  if (is(l, 'try-error')) {
+    #Windows does not support mclapply...
+    l <- lapply(
+      X = 1:nrow(H2),
+      FUN = function(i) {
+        idxTriangle <- H2[i,]
+        idxname <- Vertices$name %in% c(idxTriangle, idxTriangle[1])
+        subVertices <-  Vertices[idxname , ]
+        subVertices <- rbind(subVertices, subVertices[1,])
+        Triangle <- as.matrix((subVertices[, c(2, 3)]))
+        p <- sp::Polygon(Triangle, hole = FALSE)
+      }
+    )
   }
-  ps <- sp::Polygons(l,1)
+
+  ps <- sp::Polygons(l, 1)
   sps <- sp::SpatialPolygons(list(ps))
   sps <- rgeos::gUnion(sps, sps)
 
-  AreaObj <- rgeos::gArea(sps)
+  ObjArea <- rgeos::gArea(sps)
   bb <- sp::bbox(sps)
-  AreaCuad <- prod(diff(t(bb)))
+  SqArea <- prod(diff(t(bb)))
 
-  return(c(AreaObj, AreaCuad, 1 - AreaObj / AreaCuad))
+  return(list(
+    ObjArea = ObjArea,
+    SqArea = SqArea,
+    index = 1 - ObjArea / SqArea,
+    box = bb
+  ))
 
-  #calculates the standard error of the main effect estimates
-  # yi.sc = (yi - mean(yi)) / sd(yi)            	#scaled yi
-  # u = (yi - gi) / (sd(yi) * abs(1 - Si) ** 0.5)   #scales residuals
-  # Si.se = abs(1 - Si) * sd(yi.sc ** 2 - u ** 2) / length(yi) ** 0.5
-  # q0.05 = qnorm(0.05, Si, Si.se)
-  # return(c(Si, bw, Si.se, q0.05))
 }
 
-constructHOMOLOGY <- function (Y, X, radius, dimension) {
+constructHOMOLOGY <- function (Y, X, radius, dimension, alpha) {
   library(igraph)
   #DOC
   #Estimates nonparametrically the regression curve across all the column of the
