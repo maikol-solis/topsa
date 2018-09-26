@@ -3,52 +3,87 @@
 #'sobolSmthSpl' from the package 'sensitivity'. However, the core estimations
 #are my original work.
 
-sobolManifold <- function(Y, X, radius = 1, dimension = 3) {
-  #Arguments:
-  #Y: matrix of model outputs (only one column)
-  #X: matrix model parameters
-  #radius: radius to build the neighborhood graph
-  #dimension: number of homology spaces
-  #MAIN
+sobolManifold <-
+  function(Y,
+           X,
+           radius = 1,
+           dimension = 3,
+           alpha = 0.2) {
+    #Arguments:
+    #Y: matrix of model outputs (only one column)
+    #X: matrix model parameters
+    #radius: radius to build the neighborhood graph
+    #dimension: number of homology spaces
+    #MAIN
 
-  if (!requireNamespace("igraph", quietly = TRUE)) {
-    stop("Please install the package np: install.packages('igraph')")
-  }#end-require-sp
-  if (!requireNamespace("sp", quietly = TRUE)) {
-    stop("Please install the package np: install.packages('sp')")
-  }#end-require-sp
-  if (!requireNamespace("rgeos", quietly = TRUE)) {
-    stop("Please install the package np: install.packages('rgeos')")
-  }#end-require-rgeos
+    if (!requireNamespace("igraph", quietly = TRUE)) {
+      stop("Please install the package np: install.packages('igraph')")
+    }#end-require-igraph
+    if (!requireNamespace("sp", quietly = TRUE)) {
+      stop("Please install the package sp: install.packages('sp')")
+    }#end-require-sp
+    if (!requireNamespace("rgeos", quietly = TRUE)) {
+      stop("Please install the package rgeos: install.packages('rgeos')")
+    }#end-require-rgeos
+    if (!requireNamespace("pbmcapply", quietly = TRUE)) {
+      stop("Please install the package pbmcapply: install.packages('pbmcapply')")
+    }#end-require-pbmcapply
+    # if (!requireNamespace("multimode", quietly = TRUE)) {
+    #   stop("Please install the package multimode: install.packages('multimode')")
+    # }#end-require-multimode
 
-  ANS <- list()
-  ANS[['call']] <- match.call()
-  ANS[['X']] <- X
-  ANS[['Y']] <- Y
-  ANS[['radius']] <- radius
-  ANS[['dimension']] <- dimension
-  par.names = colnames(X)	#gets parameters names
-  if (is.null(colnames(X)))
-    par.names = paste0('X', 1:ncol(X))
-  X <- normalizeX(X)    		#normalize inpiuts between [0,1]
-  Y <- normalizeX(Y)    		#center model responses
-  Y <- sapply(1:ncol(X), function(i)
-    return(Y[order(X[, i])]))    #order Y before X (or create a new variable for X)
-  X <- sapply(1:ncol(X), function(i)
-    return(X[order(X[, i]), i]))
-  HOMOLOGY <- constructHOMOLOGY(Y, X, radius, dimension)
-  ANS[['HOMOLOGY']] <- HOMOLOGY
-  SA.tab <- t(sapply(HOMOLOGY, estimate_index))
-  colnames(SA.tab) <- c('Obj Area', 'Square Area' , 'Index')
-  rownames(SA.tab) <- par.names
-  ANS[['index']] <- SA.tab
-  class(ANS) <- 'sobolManifold'
-  return(ANS)
-}
 
-estimate_index <- function (HOMOLOGY) {
 
-  vv <- igraph::as_data_frame(HOMOLOGY[["graph"]], "vertices")
+    ANS <- list()
+    ANS[['call']] <- match.call()
+    ANS[['X']] <- X
+    ANS[['Y']] <- Y
+    ANS[['dimension']] <- dimension
+    ANS[['alpha']] <- alpha
+    par.names = colnames(X)	#gets parameters names
+    if (is.null(colnames(X)))
+      par.names = paste0('X', 1:ncol(X))
+    message("Homology construction")
+    HOMOLOGY <- constructHOMOLOGY(Y, X, radius, dimension, alpha)
+
+    # nc <-  min(ncol(X), parallel::detectCores()) / 2
+    #
+    # SA.tab <- try(pbmcapply::pbmclapply(X = HOMOLOGY,
+    #                                     FUN = estimate_index,
+    #                                     mc.cores = nc),
+    #               silent = T
+    # )
+    #
+    # if (is(SA.tab, 'try-error')) {
+    #   #Windows does not support mclapply...
+    message("Index estimation")
+    SA.tab <- lapply(X = HOMOLOGY,
+                     FUN = estimate_index)
+    # }
+
+    axis.scale <- NULL
+    for (i in 1:ncol(X)) {
+      HOMOLOGY[[i]]$box <- SA.tab[[i]]$box
+      radius[i] <- HOMOLOGY[[i]]$radius
+      # axis.scale[i] <- HOMOLOGY[[i]]$scales
+    }
+    ANS[['radius']] <- radius
+    # ANS[['axis.scale']] <- axis.scale
+
+    ANS[['HOMOLOGY']] <- HOMOLOGY
+    SA.print <- t(sapply(SA.tab, function(x) {
+      as.numeric(x[1:3])
+    }))
+    colnames(SA.print) <- c('Obj Area', 'Square Area' , 'Index')
+    rownames(SA.print) <- par.names
+    ANS[['index']] <- SA.print
+    class(ANS) <- 'sobolManifold'
+    return(ANS)
+  }
+
+estimate_index <- function (H) {
+  vv <- igraph::as_data_frame(H[["graph"]], "vertices")
+  H2 <- H[["homology"]][[3]]
   l <- list()
   H2 <- HOMOLOGY[["homology"]][[3]]
   idxObj <- sort(unique(as.numeric(H2)))
