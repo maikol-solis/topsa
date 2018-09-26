@@ -390,6 +390,60 @@ plot.sobolManifold <- function(x, ...) {
 print.sobolManifold <- function(x, ...) {
   cat("\nCall:\n", deparse(x[['call']]), "\n", sep = "")
   cat("\nNumber of observations:", length(x[['Y']]), "\n")
-  cat("\nFirst order indices:\n")
-  print(x[['S']])
+  cat("\nFirst order indices\n")
+  print(x[['index']])
+}
+
+
+plot.sobolManifold <- function(HOMOLOGYObj, n = 5000) {
+  if (!requireNamespace("igraph", quietly = TRUE)) {
+    stop("Please install the package np: install.packages('igraph')")
+  }#end-require-igraph
+  g <- HOMOLOGYObj$graph
+  H2 <- HOMOLOGYObj$homology[[3]]
+  bb <- HOMOLOGYObj$box
+
+  par(cex = 2)
+  plot.igraph(
+    g,
+    rescale = FALSE,
+    axes = TRUE,
+    asp = 0,
+    ylim = range(V(g)$y[as.integer(H2)]),
+    xlim = range(V(g)$x[as.integer(H2)]),
+    vertex.size = 0,
+    vertex.label = NA,
+    vertex.label.cex = 1.5,
+    edge.arrow.size = 1,
+    edge.width = 0.5,
+    edge.color = "lightgrey"
+  )
+
+
+  if (n == "full") {
+    s <- 1:nrow(H2)
+  } else{
+    s <- sample(1:nrow(H2), min(nrow(H2), n))
+  }
+
+  H2 <- H2[s,]
+  for (k in 1:dim(H2)[1]) {
+    polygon(
+      V(g)$x[H2[k,]],
+      V(g)$y[H2[k,]],
+      border = adjustcolor("blue", alpha.f = 0.1),
+      col = adjustcolor("lightblue", alpha.f = 0.9)
+    )
+  }
+
+  rect(
+    xleft = bb[1, 1],
+    xright = bb[1, 2],
+    ybottom = bb[2, 1],
+    ytop = bb[2, 2],
+    lwd = 2,
+    border = adjustcolor("red", alpha.f = 0.8)
+  )
+
+
 }
