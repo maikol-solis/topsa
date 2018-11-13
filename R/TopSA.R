@@ -15,9 +15,11 @@ TopSA <-
     #radius: radius to build the neighborhood graph
     #dimension: number of homology spaces
     #MAIN
-
+    if (!requireNamespace("scales", quietly = TRUE)) {
+      stop("Please install the package scales: install.packages('scales')")
+    }#end-require-scales
     if (!requireNamespace("igraph", quietly = TRUE)) {
-      stop("Please install the package np: install.packages('igraph')")
+      stop("Please install the package igraph: install.packages('igraph')")
     }#end-require-igraph
     if (!requireNamespace("sp", quietly = TRUE)) {
       stop("Please install the package sp: install.packages('sp')")
@@ -139,7 +141,7 @@ estimate_index <- function (H) {
 }
 
 constructHOMOLOGY <- function (Y, X, radius, dimension, alpha) {
-  library(igraph)
+ # library(igraph)
   #DOC
   #Arguments:
   #Y: matrix containing the response variable
@@ -149,64 +151,64 @@ constructHOMOLOGY <- function (Y, X, radius, dimension, alpha) {
 
   #CONTAINS
 
-  lower_nbrs <- function(graph, node) {
-    n <- igraph::neighbors(graph, node)
-    edgesreturn <-  as.numeric(n[n < node])
-    # nodeSet =  as.numeric(V(graph))
-    # edgesreturn <- NULL
-    # for (x in nodeSet) {
-    #   if (length(E(induced_subgraph(graph, c(x, node)))) == 1 &
-    #       node > x) {
-    #     edgesreturn <- c(edgesreturn, x)
-    #   }
-    # }
-    return(edgesreturn)
-  }
-
-  add_cofaces <- function(graph, k, tau, N, V) {
-    V <- union(V, list(tau))
-    if (length(tau) >= k) {
-      return(V)
-    } else{
-      for (v in N) {
-        sigma <- union(tau, v)
-        M <- intersect(N, lower_nbrs(graph = graph, v))
-        V <- add_cofaces(graph, k, sigma, M, V)
-      }
-    }
-    return(V)
-  }
-
-  incremental_VR <- function(graph, k) {
-    nodeSet =  as.numeric(V(graph))
-    V <- list()
-    for (u in nodeSet) {
-      N <- lower_nbrs(graph, u)
-      V <- add_cofaces(graph, k, u, N, V)
-    }
-    return(V)
-  }
-
-  extract_vertices <- function(x, k) {
-    if (!is.null(x) & length(x) == k) {
-      return(x)
-    }
-  }
-
-  create_homology_groups <- function(k, VR) {
-    H <- sapply(VR, extract_vertices , k)
-    H <- H[!sapply(H, is.null)]
-    H <- do.call('rbind', H)
-  }
+  # lower_nbrs <- function(graph, node) {
+  #   n <- igraph::neighbors(graph, node)
+  #   edgesreturn <-  as.numeric(n[n < node])
+  #   # nodeSet =  as.numeric(V(graph))
+  #   # edgesreturn <- NULL
+  #   # for (x in nodeSet) {
+  #   #   if (length(E(induced_subgraph(graph, c(x, node)))) == 1 &
+  #   #       node > x) {
+  #   #     edgesreturn <- c(edgesreturn, x)
+  #   #   }
+  #   # }
+  #   return(edgesreturn)
+  # }
+  #
+  # add_cofaces <- function(graph, k, tau, N, V) {
+  #   V <- union(V, list(tau))
+  #   if (length(tau) >= k) {
+  #     return(V)
+  #   } else{
+  #     for (v in N) {
+  #       sigma <- union(tau, v)
+  #       M <- intersect(N, lower_nbrs(graph = graph, v))
+  #       V <- add_cofaces(graph, k, sigma, M, V)
+  #     }
+  #   }
+  #   return(V)
+  # }
+  #
+  # incremental_VR <- function(graph, k) {
+  #   nodeSet =  as.numeric(V(graph))
+  #   V <- list()
+  #   for (u in nodeSet) {
+  #     N <- lower_nbrs(graph, u)
+  #     V <- add_cofaces(graph, k, u, N, V)
+  #   }
+  #   return(V)
+  # }
+  #
+  # extract_vertices <- function(x, k) {
+  #   if (!is.null(x) & length(x) == k) {
+  #     return(x)
+  #   }
+  # }
+  #
+  # create_homology_groups <- function(k, VR) {
+  #   H <- sapply(VR, extract_vertices , k)
+  #   H <- H[!sapply(H, is.null)]
+  #   H <- do.call('rbind', H)
+  # }
 
   constructor <-
     function(i, Ydat, Xdat, radius, dimension, alpha) {
       Y <- Ydat
-      X <- Xdat
+      X <- Xdat[, i]
 
       Xr <- scales::rescale(X , to = c(0, 1))
       Yr <- scales::rescale(Y , to = c(0, 1))
-      neigborhood.distance <- dist(cbind(Xr[, i], Yr))
+      neigborhood.distance <- dist(cbind(Xr, Yr))
 
       #radius[i] <- fivenum(neigborhood.distance)[2]
       # dY <- diff(range(Y))
@@ -233,7 +235,7 @@ constructHOMOLOGY <- function (Y, X, radius, dimension, alpha) {
                                 mode = "undirected",
                                 weighted = NULL)
       graphBase <-
-        igraph::set_vertex_attr(graphBase, name = "x", value = X[, i])
+        igraph::set_vertex_attr(graphBase, name = "x", value = Xdat[, i])
       graphBase <-
         igraph::set_vertex_attr(graphBase, name = "y", value = Y)
 
@@ -272,19 +274,19 @@ constructHOMOLOGY <- function (Y, X, radius, dimension, alpha) {
 
   nc <-  min(ncol(X), parallel::detectCores())
 
-  ANS <- try(pbmcapply::pbmclapply(
-    X = 1:ncol(X),
-    FUN = constructor,
-    Ydat = Y,
-    Xdat = X,
-    radius = radius,
-    dimension = dimension,
-    alpha = alpha,
-    mc.cores = nc
-  ),
-  silent = T)
+  # ANS <- try(pbmcapply::pbmclapply(
+  #   X = 1:ncol(X),
+  #   FUN = constructor,
+  #   Ydat = Y,
+  #   Xdat = X,
+  #   radius = radius,
+  #   dimension = dimension,
+  #   alpha = alpha,
+  #   mc.cores = nc
+  # ),
+  # silent = T)
 
-  if (is(ANS, 'try-error')) {
+  if (!exists("ANS") || is(ANS, 'try-error')) {
     #Windows does not support mclapply...
     HOMOLOGY <- lapply(
       X = 1:ncol(X),
