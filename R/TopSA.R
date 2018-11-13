@@ -274,17 +274,17 @@ constructHOMOLOGY <- function (Y, X, radius, dimension, alpha) {
 
   nc <-  min(ncol(X), parallel::detectCores())
 
-  # ANS <- try(pbmcapply::pbmclapply(
-  #   X = 1:ncol(X),
-  #   FUN = constructor,
-  #   Ydat = Y,
-  #   Xdat = X,
-  #   radius = radius,
-  #   dimension = dimension,
-  #   alpha = alpha,
-  #   mc.cores = nc
-  # ),
-  # silent = T)
+  ANS <- try(pbmcapply::pbmclapply(
+    X = 1:ncol(X),
+    FUN = constructor,
+    Ydat = Y,
+    Xdat = X,
+    radius = radius,
+    dimension = dimension,
+    alpha = alpha,
+    mc.cores = nc
+  ),
+  silent = T)
 
   if (!exists("ANS") || is(ANS, 'try-error')) {
     #Windows does not support mclapply...
