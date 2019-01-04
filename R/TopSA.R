@@ -79,7 +79,7 @@ TopSA <-
     colnames(SA.print) <- c('Obj Area', 'Square Area' , 'Index')
     rownames(SA.print) <- par.names
     ANS[['index']] <- SA.print
-    class(ANS) <- 'sobolManifold'
+    class(ANS) <- 'TopSA'
     return(ANS)
   }
 
