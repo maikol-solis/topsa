@@ -334,7 +334,8 @@ plot.TopSA <- function(HOMOLOGYObj, n = 5000,...) {
     vertex.label.cex = 1.5,
     edge.arrow.size = 1,
     edge.width = 0.5,
-    edge.color = "lightgrey"
+    edge.color = "lightgrey", 
+    ...
   )
 
 
