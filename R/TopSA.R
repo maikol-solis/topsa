@@ -313,7 +313,7 @@ print.sobolManifold <- function(x, ...) {
 }
 
 
-plot.sobolManifold <- function(HOMOLOGYObj, n = 5000) {
+plot.TopSA <- function(HOMOLOGYObj, n = 5000,...) {
   if (!requireNamespace("igraph", quietly = TRUE)) {
     stop("Please install the package np: install.packages('igraph')")
   }#end-require-igraph
