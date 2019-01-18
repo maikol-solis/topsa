@@ -2,7 +2,7 @@
 
 a <- -1
 b <- 1
-n <- 1000
+n <- 500
 X1 <- runif(n, a, b)
 X2 <- runif(n, a, b)
 Xr <- matrix(runif(n * 3, a, b), nrow = n)
@@ -16,7 +16,7 @@ Y <- 2 * X1 +  X2
 radius <- rep(2, times = ncol(X))
 
 message("Linear Case")
-ExLinear <- sobolManifold(
+ExLinear <- TopSA::TopSA(
   Y = Y,
   X = X,
   radius = radius,
@@ -78,7 +78,7 @@ dev.off()
 
 a <- -1
 b <- 1
-n <- 1000
+n <- 500
 theta <- runif(n, 0, 2*pi)
 r <- (sqrt(runif(n))) * (0.5) + 0.5
 X2 <- runif(n, a, b)
@@ -93,7 +93,7 @@ X <- cbind(X1, X2)
 radius <- c(0.5,1)
 
 message("Circle 1 Case")
-ExCirc1hole <- sobolManifold(
+ExCirc1hole <- TopSA::TopSA(
   Y = Y,
   X = X,
   radius = radius,
@@ -153,7 +153,7 @@ X <- cbind(X1, X2)
 radius <- c(0.5,1)
 
 message("Circle 2 Case")
-ExCirc2holes <- sobolManifold(
+ExCirc2holes <- TopSA::TopSA(
   Y = Y,
   X = X,
   radius = radius,
@@ -174,11 +174,12 @@ dev.off()
 
 a <- -pi
 b <- pi
-n <- 1000
+n <- 500
 X1 <- runif(n, a, b)
 X2 <- runif(n, a, b)
 X3 <- runif(n, a, b)
-X <- cbind(X1, X2, X3)
+X4 <- rnorm(n)
+X <- cbind(X1, X2, X3, X4)
 Y <- sensitivity::ishigami.fun(X)
 # X <- scales::rescale(X, to = c(0,1))
 # Y <- scales::rescale(Y, to = c(0,1))
@@ -190,12 +191,12 @@ Y <- sensitivity::ishigami.fun(X)
 # plot(X[,3],Y, asp = 0, xlim = c(-3.2, 3.2))
 
 message("Ishigami Case")
-ExIshigami <- sobolManifold(
+ExIshigami <- TopSA::TopSA(
   Y = Y,
   X = X,
   radius = NULL,
   dimension = 3,
-  alpha = 0.05
+  alpha = 0.07
 )
 g1 <- ExIshigami$HOMOLOGY[[1]]
 pdf(file = "man/exIshigami-1.pdf")
