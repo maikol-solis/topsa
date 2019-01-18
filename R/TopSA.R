@@ -15,24 +15,24 @@ TopSA <-
     #radius: radius to build the neighborhood graph
     #dimension: number of homology spaces
     #MAIN
-    if (!requireNamespace("scales", quietly = TRUE)) {
-      stop("Please install the package scales: install.packages('scales')")
-    }#end-require-scales
-    if (!requireNamespace("igraph", quietly = TRUE)) {
-      stop("Please install the package igraph: install.packages('igraph')")
-    }#end-require-igraph
-    if (!requireNamespace("sp", quietly = TRUE)) {
-      stop("Please install the package sp: install.packages('sp')")
-    }#end-require-sp
-    if (!requireNamespace("rgeos", quietly = TRUE)) {
-      stop("Please install the package rgeos: install.packages('rgeos')")
-    }#end-require-rgeos
-    if (!requireNamespace("pbmcapply", quietly = TRUE)) {
-      stop("Please install the package pbmcapply: install.packages('pbmcapply')")
-    }#end-require-pbmcapply
-    # if (!requireNamespace("multimode", quietly = TRUE)) {
-    #   stop("Please install the package multimode: install.packages('multimode')")
-    # }#end-require-multimode
+    # if (!requireNamespace("scales", quietly = TRUE)) {
+    #   stop("Please install the package scales: install.packages('scales')")
+    # }#end-require-scales
+    # if (!requireNamespace("igraph", quietly = TRUE)) {
+    #   stop("Please install the package igraph: install.packages('igraph')")
+    # }#end-require-igraph
+    # if (!requireNamespace("sf", quietly = TRUE)) {
+    #   stop("Please install the package sf: install.packages('sf')")
+    # }#end-require-sp
+    # # if (!requireNamespace("rgeos", quietly = TRUE)) {
+    # #   stop("Please install the package rgeos: install.packages('rgeos')")
+    # # }#end-require-rgeos
+    # if (!requireNamespace("pbmcapply", quietly = TRUE)) {
+    #   stop("Please install the package pbmcapply: install.packages('pbmcapply')")
+    # }#end-require-pbmcapply
+    # # if (!requireNamespace("multimode", quietly = TRUE)) {
+    # #   stop("Please install the package multimode: install.packages('multimode')")
+    # # }#end-require-multimode
 
 
 
@@ -48,8 +48,9 @@ TopSA <-
     message("Homology construction")
     HOMOLOGY <- constructHOMOLOGY(Y, X, radius, dimension, alpha)
 
-    # nc <-  min(ncol(X), parallel::detectCores()) / 2
-    #
+    nc <-  min(ncol(X), parallel::detectCores()) / 2
+
+    message("Index estimation")
     # SA.tab <- try(pbmcapply::pbmclapply(X = HOMOLOGY,
     #                                     FUN = estimate_index,
     #                                     mc.cores = nc),
@@ -57,26 +58,27 @@ TopSA <-
     # )
     #
     # if (is(SA.tab, 'try-error')) {
-    #   #Windows does not support mclapply...
-    message("Index estimation")
+      #Windows does not support mclapply...
     SA.tab <- lapply(X = HOMOLOGY,
                      FUN = estimate_index)
     # }
 
-    axis.scale <- NULL
+    #axis.scale <- NULL
     for (i in 1:ncol(X)) {
-      HOMOLOGY[[i]]$box <- SA.tab[[i]]$box
       radius[i] <- HOMOLOGY[[i]]$radius
+
       # axis.scale[i] <- HOMOLOGY[[i]]$scales
     }
     ANS[['radius']] <- radius
     # ANS[['axis.scale']] <- axis.scale
 
     ANS[['HOMOLOGY']] <- HOMOLOGY
+
     SA.print <- t(sapply(SA.tab, function(x) {
-      as.numeric(x[1:3])
+      as.numeric(x[1:4])
     }))
-    colnames(SA.print) <- c('Obj Area', 'Square Area' , 'Index')
+
+    colnames(SA.print) <- c('Obj Area', 'Square Area' , 'Index', 'Symmetric')
     rownames(SA.print) <- par.names
     ANS[['index']] <- SA.print
     class(ANS) <- 'TopSA'
@@ -92,7 +94,22 @@ estimate_index <- function (H) {
                           x = vv$x[idxObj],
                           y = vv$y[idxObj])
 
-  nc <-   parallel::detectCores() - 1
+  nc <-  parallel::detectCores() - 1
+
+  mp <- sf::st_multipolygon()
+
+  for (i in seq(1,nrow(H2))) {
+    idxTriangle <- H2[i,]
+    idxname <- Vertices$name %in% c(idxTriangle, idxTriangle[1])
+    subVertices <-  Vertices[idxname , ]
+    subVertices <- rbind(subVertices, subVertices[1,])
+    Triangle <- as.matrix((subVertices[, c(2, 3)]))
+    rownames(Triangle) <- NULL
+    p <- sf::st_polygon(list(Triangle))
+
+if (as.matrix(sf))
+
+  }
 
   l <-  try(pbmcapply::pbmclapply(
     X = 1:nrow(H2),
@@ -102,7 +119,8 @@ estimate_index <- function (H) {
       subVertices <-  Vertices[idxname , ]
       subVertices <- rbind(subVertices, subVertices[1,])
       Triangle <- as.matrix((subVertices[, c(2, 3)]))
-      p <- sp::Polygon(Triangle, hole = FALSE)
+      rownames(Triangle) <- NULL
+      p <- sf::st_polygon(list(Triangle))
     },
     mc.cores = nc
   ),
@@ -118,26 +136,45 @@ estimate_index <- function (H) {
         subVertices <-  Vertices[idxname , ]
         subVertices <- rbind(subVertices, subVertices[1,])
         Triangle <- as.matrix((subVertices[, c(2, 3)]))
-        p <- sp::Polygon(Triangle, hole = FALSE)
+        rownames(Triangle) <- NULL
+        p <- sf::st_polygon(list(Triangle))
       }
     )
   }
 
-  ps <- sp::Polygons(l, 1)
-  sps <- sp::SpatialPolygons(list(ps))
-  sps <- rgeos::gUnion(sps, sps)
+  mp <- sf::st_multipolygon(l)
+  mp_union <- sf::st_union(mp)
+  bb <- sf::st_make_grid(x = mp_union, n = 1)
 
-  ObjArea <- rgeos::gArea(sps)
-  bb <- sp::bbox(sps)
-  SqArea <- prod(diff(t(bb)))
+  reflectiony <-  matrix(c(1, 0, 0, -1), 2, 2)
 
-  return(list(
-    ObjArea = ObjArea,
-    SqArea = SqArea,
-    index = 1 - ObjArea / SqArea,
-    box = bb
-  ))
+  mp_reflectiony <-
+    mp_union * reflectiony + c(0, 2 * sf::st_centroid(mp)[2])
 
+  plot(mp_union, asp = 0, col = "blue", axes = TRUE)
+  plot(mp_reflectiony,
+       asp = 0,
+       col = "red",
+       add = TRUE)
+
+
+  mp_sym_difference <-
+    sf::st_sym_difference(mp, mp_reflectiony)
+  plot(mp_sym_difference, col = "blue", asp=0)
+  mp_sym_difference_area <- sf::st_area(mp_sym_difference)
+
+  ObjArea <- sf::st_area(mp)
+  SqArea <- sf::st_area(bb)
+
+  return(
+    list(
+      ObjArea = ObjArea,
+      SqArea = SqArea,
+      index = 1 - ObjArea / SqArea,
+      symmetric_index = mp_sym_difference_area / (2 * ObjArea),
+      manifold.plot = mp
+    )
+  )
 }
 
 constructHOMOLOGY <- function (Y, X, radius, dimension, alpha) {
@@ -334,7 +371,7 @@ plot.TopSA <- function(HOMOLOGYObj, n = 5000,...) {
     vertex.label.cex = 1.5,
     edge.arrow.size = 1,
     edge.width = 0.5,
-    edge.color = "lightgrey", 
+    edge.color = "lightgrey",
     ...
   )
 
