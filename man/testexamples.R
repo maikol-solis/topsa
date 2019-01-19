@@ -6,8 +6,8 @@ n <- 500
 X1 <- runif(n, a, b)
 X2 <- runif(n, a, b)
 Xr <- matrix(runif(n * 3, a, b), nrow = n)
-X <- cbind(X1, X2, Xr)
-Y <- 2 * X1 +  X2
+Xdat <- cbind(X1, X2, Xr)
+Ydat <- 2 * X1 +  X2
 # plot(X[, 1], Y)
 # plot(X[, 2], Y)
 # plot(X[, 3], Y)
@@ -16,12 +16,12 @@ Y <- 2 * X1 +  X2
 radius <- rep(2, times = ncol(X))
 
 message("Linear Case")
-ExLinear <- TopSA::TopSA(
-  Y = Y,
-  X = X,
-  radius = radius,
+ExLinear <- TopSA(
+  Ydat = Ydat,
+  Xdat = Xdat,
   dimension = 3,
-  alpha = 0.05
+  threshold = 0.05,
+  method = "VR"
 )
 g1 <- ExLinear$HOMOLOGY[[1]]
 pdf(file = "man/exLinear-1.pdf")
