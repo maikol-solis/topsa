@@ -256,7 +256,7 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, threshold) {
       Box.Area = Box.Area,
       Geometric.Correlation = 1 - Manifold.Area / Box.Area,
       Symmetric.Index = mp_sym_difference_area / (2 * Manifold.Area),
-      manifold.plot = mp
+      manifold.plot = mp_union
     )
   )
 }
