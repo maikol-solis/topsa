@@ -5,37 +5,41 @@ b <- 1
 n <- 500
 X1 <- runif(n, a, b)
 X2 <- runif(n, a, b)
-Xr <- matrix(runif(n * 3, a, b), nrow = n)
-Xdat <- cbind(X1, X2, Xr)
-Ydat <- 2 * X1 +  X2
+Xnoise <- matrix(runif(n * 3, a, b), nrow = n)
+Xdat <- data.frame(X1, X2, Xnoise = Xnoise)
+Ydat <-data.frame(Y = 2 * X1 +  X2)
 # plot(X[, 1], Y)
 # plot(X[, 2], Y)
 # plot(X[, 3], Y)
 
 
-radius <- rep(2, times = ncol(X))
-
 message("Linear Case")
-ExLinear <- TopSA(
+ExLinear <- TopSA::TopSA(
   Ydat = Ydat,
   Xdat = Xdat,
   dimension = 3,
-  threshold = 0.05,
+  threshold = 0.07,
   method = "VR"
 )
-g1 <- ExLinear$HOMOLOGY[[1]]
-pdf(file = "man/exLinear-1.pdf")
-plot.sobolManifold(g1, n=10000)
-dev.off()
-g2 <- ExLinear$HOMOLOGY[[2]]
-pdf(file = "man/exLinear-2.pdf")
-plot.sobolManifold(g2, n=10000)
-dev.off()
-g3 <- ExLinear$HOMOLOGY[[3]]
-pdf(file = "man/exLinear-3.pdf")
-plot.sobolManifold(g3, n=10000)
-dev.off()
 
+pdf(file = "man/exLinear-reflection-1.pdf")
+plot(ExLinear,nvar = 1,with.reflection = TRUE)
+dev.off()
+pdf(file = "man/exLinear-sym-diff-1.pdf")
+plot(ExLinear,nvar = 1,symmetric.diff = TRUE)
+dev.off()
+pdf(file = "man/exLinear-reflection-2.pdf")
+plot(ExLinear,nvar = 2, with.reflection = TRUE)
+dev.off()
+pdf(file = "man/exLinear-sym-diff-2.pdf")
+plot(ExLinear,nvar = 2, symmetric.diff = TRUE)
+dev.off()
+pdf(file = "man/exLinear-reflection-3.pdf")
+plot(ExLinear,nvar = 3, with.reflection = TRUE)
+dev.off()
+pdf(file = "man/exLinear-sym-diff-3.pdf")
+plot(ExLinear,nvar = 3, symmetric.diff = TRUE)
+dev.off()
 
 a <- -1
 b <- 1
