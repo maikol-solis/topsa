@@ -281,28 +281,136 @@ print.TopSA <- function(x, ...) {
 
 
 
-plot.TopSA <- function(resultsObj, percent = 0.1, ...) {
-  if (percent < 0 | percent > 1)
-    stop("Percent is between 0 and 1")
+plot.TopSA <- function(TopSAObj,
+                       nvar = 1,
+                       with.reflection = FALSE,
+                       symmetric.diff = FALSE,
+                       legend = FALSE,
+                       ...) {
 
-  sapply(resultsObj$results, function(p) {
-    p <- p$manifold.plot
-    bb <- sf::st_make_grid(x = p, n = 1)
-    idx <- sample(1:length(p), length(p) * percent)
-    p <- sf::st_multipolygon(p[idx])
+  manifold <- TopSAObj$result[[nvar]]$manifold.plot
+  boundingbox <- sf::st_make_grid(x = p, n = 1)
+  datapoints <-
+    sf::st_multipoint(as.matrix(cbind(TopSAObj$Xdat[, nvar], TopSAObj$Ydat)))
+  reflectionx <-  matrix(c(1, 0, 0, -1), 2, 2)
+  manifold_reflectionx <-
+    manifold * reflectionx + c(0, 2 * sf::st_centroid(manifold)[2])
+  manifold_sym_difference <-
+    sf::st_sym_difference(manifold, manifold_reflectionx)
 
+  if (symmetric.diff) {
     plot(
-      p,
+      manifold_sym_difference,
       asp = 0,
       axes = TRUE,
-      col = "blue",
-      border = "lightblue"
+      col = "orange"
     )
-    plot(bb, add = TRUE)
-  })
-  invisible(NULL)
-}
+    plot(
+      datapoints,
+      col = "black",
+      type = "p",
+      pch = ".",
+      cex = 3,
+      add = TRUE
+    )
+    plot(boundingbox,
+         border = "red",
+         lwd = 2,
+         add = TRUE)
 
+  } else{
+    plot(
+      manifold,
+      asp = 0,
+      axes = TRUE,
+      col = "deepskyblue",
+      border = "blue",
+      xlab = TopSAObj$result[[nvar]]$xname,
+      ylab = TopSAObj$result[[nvar]]$yname
+    )
+    plot(boundingbox,
+         border = "red",
+         lwd = 2,
+         add = TRUE)
+    plot(
+      datapoints,
+      col = "black",
+      type = "p",
+      pch = ".",
+      cex = 3,
+      add = TRUE
+    )
+    if (with.reflection == FALSE & legend == TRUE) {
+      legend(
+        x = "bottomright",
+        y.intersp = 1,
+        legend = c(
+          paste0(
+            "Manifold Area: ",
+            round(TopSAObj$results[[nvar]]$Manifold.Area, 2)
+          ),
+          paste0("Box Area: ", round(TopSAObj$results[[nvar]]$Box.Area, 2)),
+          paste0(
+            "Geometric Correlation: ",
+            round(TopSAObj$results[[nvar]]$Geometric.Correlation, 2)
+          )
+        ),
+        border = c("blue", "red", "white"),
+        fill = c("deepskyblue", "white", "white")
+      )
+
+    }
+
+    if (with.reflection == TRUE) {
+      plot(manifold_reflectionx, col = "seagreen1", add = TRUE)
+      plot(
+        datapoints,
+        col = "black",
+        type = "p",
+        pch = ".",
+        cex = 3,
+        add = TRUE
+      )
+
+
+      if (legend == TRUE) {
+        legend(
+          x = "bottomright",
+          y.intersp = 1,
+          legend = c(
+            paste0(
+              "Manifold Area: ",
+              round(TopSAObj$results[[nvar]]$Manifold.Area, 2)
+            ),
+            paste0(
+              "Symmetric Reflection Area: ",
+              round(TopSAObj$results[[nvar]]$Manifold.Area, 2)
+            ),
+            paste0("Box Area: ", round(TopSAObj$results[[nvar]]$Box.Area, 2)),
+            paste0(
+              "Geometric Correlation: ",
+              round(TopSAObj$results[[nvar]]$Geometric.Correlation, 2)
+            )
+          ),
+          border = c("blue", "black", "red", "white"),
+          fill = c("deepskyblue", "seagreen1", "white", "white")
+        )
+      }
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+}
 
 
 
