@@ -62,6 +62,13 @@ TopSA <-
     silent = TRUE
 
     )
+
+
+    for (i in 1:ncol(Xdat)) {
+      sensitivity_results[[i]]$xname <- colnames(Xdat)[i]
+      sensitivity_results[[i]]$yname <- colnames(Ydat)
+    }
+
     ANS[["results"]] <- sensitivity_results
     class(ANS) <- 'TopSA'
     return(ANS)
@@ -105,12 +112,14 @@ estimate_sensitivity_index <-
   }
 
 
+
+
 VR_homology <- function(ivar, Ydat, Xdat, dimension, threshold) {
 
   constructHOMOLOGY <-
     function (ivar, Ydat, Xdat, dimension, threshold) {
-      Y <- Ydat
-      X <- Xdat[, ivar]
+      Y <- as.matrix(Ydat)
+      X <- as.matrix(Xdat[, ivar])
 
       Xr <- scales::rescale(X , to = c(0, 1))
       Yr <- scales::rescale(Y , to = c(0, 1))
