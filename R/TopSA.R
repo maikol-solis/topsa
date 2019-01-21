@@ -262,12 +262,6 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, threshold) {
 }
 
 
-
-
-
-
-
-
 print.TopSA <- function(x, ...) {
 
    sensitivity_table <- t(sapply(x$results, function(x) {
@@ -275,8 +269,7 @@ print.TopSA <- function(x, ...) {
   }))
 
   colnames(sensitivity_table) <- c('Radius', 'Manifold Area', 'Box Area' , 'Geometric correlation', 'Symmetric index')
-  rownames(sensitivity_table) <- par.names
-
+  rownames(sensitivity_table) <- colnames(x$Xdat)
 
   cat("\nCall:\n", deparse(x[['call']]), "\n", sep = "")
   cat("\nNumber of variables:", ncol(x[['Xdat']]), "\n")
