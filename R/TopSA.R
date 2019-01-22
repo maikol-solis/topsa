@@ -8,6 +8,7 @@ TopSA <-
            Xdat,
            dimension = 3,
            threshold = 0.05,
+           knearest = 20,
            method = c("delanauy", "VR")) {
     #Arguments:
     #Y: matrix of model outputs (only one column)
@@ -55,13 +56,12 @@ TopSA <-
       Ydat = Ydat,
       Xdat = Xdat,
       dimension = dimension,
+      knearest = knearest,
       threshold = threshold,
       method = method,
       mc.cores = min(ncol(Xdat), parallel::detectCores() - 1)
     ),
-    silent = TRUE
-
-    )
+    silent = TRUE)
 
 
     for (i in 1:ncol(Xdat)) {
@@ -99,6 +99,7 @@ estimate_sensitivity_index <-
             Ydat,
             Xdat,
             dimension,
+            knearest,
             threshold,
             method) {
     if (method == "delanauy") {
@@ -143,8 +144,23 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, threshold) {
       #  }
 
 
-      adjacency.matrix <- as.matrix(neigborhood.distance) <= r
-      diag(adjacency.matrix) <- 0
+      adjacency.matrix <-
+        as.matrix(neigborhood.distance) * (as.matrix(neigborhood.distance) <= r)
+      adjacency.matrix[adjacency.matrix==0] <- NA
+
+      npositives <- NULL
+      for (k in 1:length(Xr)) {
+        npositives[k] <- sum(adjacency.matrix[k,] >0,na.rm = TRUE)
+        knearestidx <- order(adjacency.matrix[k,])[1:knearest]
+        idx <- 1:length(Xr) %in% knearestidx
+        adjacency.matrix[k, !idx] <- NA
+      }
+
+      adjacency.matrix[is.na(adjacency.matrix)]<- 0
+      adjacency.matrix <- adjacency.matrix > 0
+
+
+
 
       graphBase <-
         igraph::graph.adjacency(adjacency.matrix,
@@ -175,7 +191,8 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, threshold) {
           graph = graphBase,
           homology = H,
           neigborhood.distance = neigborhood.distance,
-          radius = r
+          threshold = r,
+          Number.Edges.per.Point = npositives
         )
       )
 
@@ -252,7 +269,8 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, threshold) {
 
   return(
     list(
-      radius = H[["radius"]],
+      threshold = H[["threshold"]],
+      Number.Edges.per.Point = H[["Number.Edges.per.Point"]],
       Manifold.Area = Manifold.Area,
       Box.Area = Box.Area,
       Geometric.Correlation = 1 - Manifold.Area / Box.Area,
