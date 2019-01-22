@@ -261,6 +261,85 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, threshold) {
   )
 }
 
+Delanauy_homology <-
+  function(ivar, Ydat, Xdat, dimension, threshold) {
+
+    rx <- range(Xdat[,ivar])
+    ry <- range(Ydat[,])
+    minx <- min(rx)
+    miny <- min(ry)
+    datapoints <-
+      sf::st_as_sf(x = data.frame(
+        x = (Xdat[, ivar] - minx) / (diff(rx)),
+        y = (Ydat[,] - miny) / diff(ry)
+      ),
+      coords = c("x", "y"))
+
+    triangulation <-
+      sfdct::ct_triangulate(sf::st_union(datapoints),
+                            q = 30,
+                            S = 0
+                            )
+    single_triangles <- sf::st_collection_extract(triangulation)
+    # plot(
+    #   single_triangles,
+    #   axes = TRUE,
+    #   asp = 1,
+    #   col = "blue",
+    #   border = "white"
+    # )
+    single_triangles_area <-  sf::st_area(single_triangles)
+    # plot(single_triangles_area)
+    # abline(h = boxplot(single_triangles_area, plot = FALSE)$stats,
+    #        col = "red")
+    # abline(h = mean(single_triangles_area) + sd(single_triangles_area),
+    #        col = "blue")
+    # abline(h = median(single_triangles_area) , col = "green")
+    if (exists("threshold") == FALSE) {
+     threshold <- 0.1
+    }
+    cutoff <- quantile(single_triangles_area, 1-threshold)
+    idx <- single_triangles_area <= cutoff
+
+    single_triangles <- sf::st_multipolygon(single_triangles[idx])
+
+    A <- matrix(c(diff(rx),0,0,diff(ry)),nrow = 2)
+    b <- c(minx, miny)
+    single_triangles <- single_triangles*A +b
+    # plot(single_triangles,
+    #      asp = 1,
+    #      col = "blue",
+    #      border = "white")
+
+    mp_union <- sf::st_union(single_triangles)
+    bb <- sf::st_make_grid(x = mp_union, n = 1)
+
+    reflectiony <-  matrix(c(1, 0, 0, -1), 2, 2)
+
+    mp_reflectiony <-
+      mp_union * reflectiony + c(0, 2 * sf::st_centroid(mp_union)[2])
+
+
+    mp_sym_difference <-
+      sf::st_sym_difference(mp_union, mp_reflectiony)
+
+    mp_sym_difference_area <- sf::st_area(mp_sym_difference)
+
+    Manifold.Area <- sf::st_area(mp_union)
+    Box.Area <- sf::st_area(bb)
+
+    return(
+      list(
+        threshold = cutoff,
+        Manifold.Area = Manifold.Area,
+        Box.Area = Box.Area,
+        Geometric.Correlation = 1 - Manifold.Area / Box.Area,
+        Symmetric.Index = mp_sym_difference_area / (2 * Manifold.Area),
+        manifold.plot = mp_union
+      )
+    )
+  }
+
 
 print.TopSA <- function(x, ...) {
 
