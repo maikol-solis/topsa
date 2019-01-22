@@ -102,7 +102,8 @@ estimate_sensitivity_index <-
             threshold,
             method) {
     if (method == "delanauy") {
-
+      index_Obj <-
+        Delanauy_homology(ivar, Ydat, Xdat, dimension, threshold)
     } else if (method == "VR") {
       index_Obj <-  VR_homology(ivar, Ydat, Xdat, dimension, threshold)
     } else{
