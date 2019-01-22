@@ -80,7 +80,7 @@ TopSA <-
     # )
     #
     # if (is(SA.tab, 'try-error')) {
-      #Windows does not support mclapply...
+    #Windows does not support mclapply...
 
     # }
 
@@ -106,7 +106,7 @@ estimate_sensitivity_index <-
       index_Obj <-
         Delanauy_homology(ivar, Ydat, Xdat, dimension, threshold)
     } else if (method == "VR") {
-      index_Obj <-  VR_homology(ivar, Ydat, Xdat, dimension, threshold)
+      index_Obj <-  VR_homology(ivar, Ydat, Xdat, dimension, knearest, threshold)
     } else{
       stop("No method defined")
     }
@@ -116,8 +116,7 @@ estimate_sensitivity_index <-
 
 
 
-VR_homology <- function(ivar, Ydat, Xdat, dimension, threshold) {
-
+VR_homology <- function(ivar, Ydat, Xdat, dimension, knearest, threshold) {
   constructHOMOLOGY <-
     function (ivar, Ydat, Xdat, dimension, threshold) {
       Y <- as.matrix(Ydat)
@@ -210,15 +209,16 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, threshold) {
                           x = vv$x[idxObj],
                           y = vv$y[idxObj])
 
-  nc <-  ceiling((parallel::detectCores() - 1 - ncol(Xdat)) / ncol(Xdat))
+  nc <-
+    ceiling((parallel::detectCores() - 1 - ncol(Xdat)) / ncol(Xdat))
 
   l <-  try(pbmcapply::pbmclapply(
     X = 1:nrow(H2),
     FUN = function(i) {
-      idxTriangle <- H2[i,]
+      idxTriangle <- H2[i, ]
       idxname <- Vertices$name %in% c(idxTriangle, idxTriangle[1])
-      subVertices <-  Vertices[idxname , ]
-      subVertices <- rbind(subVertices, subVertices[1,])
+      subVertices <-  Vertices[idxname ,]
+      subVertices <- rbind(subVertices, subVertices[1, ])
       Triangle <- as.matrix((subVertices[, c(2, 3)]))
       rownames(Triangle) <- NULL
       p <- sf::st_polygon(list(Triangle))
@@ -232,10 +232,10 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, threshold) {
     l <- lapply(
       X = 1:nrow(H2),
       FUN = function(i) {
-        idxTriangle <- H2[i,]
+        idxTriangle <- H2[i, ]
         idxname <- Vertices$name %in% c(idxTriangle, idxTriangle[1])
-        subVertices <-  Vertices[idxname , ]
-        subVertices <- rbind(subVertices, subVertices[1,])
+        subVertices <-  Vertices[idxname ,]
+        subVertices <- rbind(subVertices, subVertices[1, ])
         Triangle <- as.matrix((subVertices[, c(2, 3)]))
         rownames(Triangle) <- NULL
         p <- sf::st_polygon(list(Triangle))
