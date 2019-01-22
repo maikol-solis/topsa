@@ -397,9 +397,8 @@ plot.TopSA <- function(TopSAObj,
                        symmetric.diff = FALSE,
                        legend = FALSE,
                        ...) {
-
   manifold <- TopSAObj$result[[nvar]]$manifold.plot
-  boundingbox <- sf::st_make_grid(x = p, n = 1)
+  boundingbox <- sf::st_make_grid(x = manifold, n = 1)
   datapoints <-
     sf::st_multipoint(as.matrix(cbind(TopSAObj$Xdat[, nvar], TopSAObj$Ydat)))
   reflectionx <-  matrix(c(1, 0, 0, -1), 2, 2)
@@ -411,9 +410,9 @@ plot.TopSA <- function(TopSAObj,
   if (symmetric.diff) {
     plot(
       manifold_sym_difference,
-      asp = 0,
       axes = TRUE,
-      col = "orange"
+      col = "orange",
+      ...
     )
     plot(
       datapoints,
@@ -431,12 +430,12 @@ plot.TopSA <- function(TopSAObj,
   } else{
     plot(
       manifold,
-      asp = 0,
       axes = TRUE,
       col = "deepskyblue",
       border = "blue",
       xlab = TopSAObj$result[[nvar]]$xname,
-      ylab = TopSAObj$result[[nvar]]$yname
+      ylab = TopSAObj$result[[nvar]]$yname,
+      ...
     )
     plot(boundingbox,
          border = "red",
@@ -508,18 +507,6 @@ plot.TopSA <- function(TopSAObj,
       }
     }
   }
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 
