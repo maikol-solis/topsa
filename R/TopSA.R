@@ -362,19 +362,30 @@ Delanauy_homology <-
 
 
 print.TopSA <- function(x, ...) {
-
-   sensitivity_table <- t(sapply(x$results, function(x) {
-    as.numeric(x[1:5])
+  sensitivity_table <- t(sapply(x$results, function(x) {
+    unlist(x[c(
+      "threshold",
+      "Manifold.Area",
+      "Box.Area",
+      "Geometric.Correlation",
+      "Symmetric.Index"
+    )])
   }))
 
-  colnames(sensitivity_table) <- c('Radius', 'Manifold Area', 'Box Area' , 'Geometric correlation', 'Symmetric index')
+  colnames(sensitivity_table) <-
+    c('Threshold',
+      'Manifold Area',
+      'Box Area' ,
+      'Geometric correlation',
+      'Symmetric index')
   rownames(sensitivity_table) <- colnames(x$Xdat)
 
   cat("\nCall:\n", deparse(x[['call']]), "\n", sep = "")
+  cat("\nMethod used:",deparse(x[["call"]]$method), sep = "")
   cat("\nNumber of variables:", ncol(x[['Xdat']]), "\n")
-  cat("\nNumber of observations:", length(x[['Ydat']]), "\n")
+  cat("\nNumber of observations:", nrow(x[['Ydat']]), "\n")
   cat("\nFirst order indices\n")
-  print(sensitivity_table[,])
+  print(sensitivity_table[, ])
   # return(sensitivity_table)
 }
 
