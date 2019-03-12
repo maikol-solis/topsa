@@ -1,3 +1,5 @@
+library(TopSA)
+
 #Test for LatinR
 
 a <- -1
@@ -23,24 +25,26 @@ ExLinearVR <- TopSA::TopSA(
 )
 
 pdf(file = "man/exLinearVR-reflection-1.pdf")
-plot(ExLinearVR,nvar = 1,with.reflection = TRUE)
+plot(ExLinearVR,nvar = 1,with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/exLinearVR-sym-diff-1.pdf")
-plot(ExLinearVR,nvar = 1,symmetric.diff = TRUE)
+plot(ExLinearVR,nvar = 1,symmetric.diff = TRUE, asp=0)
 dev.off()
 pdf(file = "man/exLinearVR-reflection-2.pdf")
-plot(ExLinearVR,nvar = 2, with.reflection = TRUE)
+plot(ExLinearVR,nvar = 2, with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/exLinearVR-sym-diff-2.pdf")
-plot(ExLinearVR,nvar = 2, symmetric.diff = TRUE)
+plot(ExLinearVR,nvar = 2, symmetric.diff = TRUE, asp=0)
 dev.off()
 pdf(file = "man/exLinearVR-reflection-3.pdf")
-plot(ExLinearVR,nvar = 3, with.reflection = TRUE)
+plot(ExLinearVR,nvar = 3, with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/exLinearVR-sym-diff-3.pdf")
-plot(ExLinearVR,nvar = 3, symmetric.diff = TRUE)
+plot(ExLinearVR,nvar = 3, symmetric.diff = TRUE, asp=0)
 dev.off()
 
+LinearVR <- print(ExLinearVR, only.return.table = T)
+xtable::print.xtable(xtable::xtable(LinearVR, align = c("c","c","c","c","c","c"),file = "man/exLinearVR-table.tex"))
 
 
 message("Linear Case")
@@ -53,25 +57,26 @@ ExLineardelanauy <- TopSA::TopSA(
 )
 
 pdf(file = "man/exLineardelanauy-reflection-1.pdf")
-plot(ExLineardelanauy,nvar = 1,with.reflection = TRUE)
+plot(ExLineardelanauy,nvar = 1,with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/exLineardelanauy-sym-diff-1.pdf")
-plot(ExLineardelanauy,nvar = 1,symmetric.diff = TRUE)
+plot(ExLineardelanauy,nvar = 1,symmetric.diff = TRUE, asp=0)
 dev.off()
 pdf(file = "man/exLineardelanauy-reflection-2.pdf")
-plot(ExLineardelanauy,nvar = 2, with.reflection = TRUE)
+plot(ExLineardelanauy,nvar = 2, with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/exLineardelanauy-sym-diff-2.pdf")
-plot(ExLineardelanauy,nvar = 2, symmetric.diff = TRUE)
+plot(ExLineardelanauy,nvar = 2, symmetric.diff = TRUE, asp=0)
 dev.off()
 pdf(file = "man/exLineardelanauy-reflection-3.pdf")
-plot(ExLineardelanauy,nvar = 3, with.reflection = TRUE)
+plot(ExLineardelanauy,nvar = 3, with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/exLineardelanauy-sym-diff-3.pdf")
-plot(ExLineardelanauy,nvar = 3, symmetric.diff = TRUE)
+plot(ExLineardelanauy,nvar = 3, symmetric.diff = TRUE, asp=0)
 dev.off()
 
-
+Lineardelanauy <- print(ExLineardelanauy, only.return.table = T)
+xtable::print.xtable(xtable::xtable(Lineardelanauy, align = c("c","c","c","c","c","c"),file = "man/exLineardelanauy-table.tex"))
 
 
 # a <- -1
@@ -131,7 +136,7 @@ ExCirc1holeVR <- TopSA::TopSA(
   Xdat = Xdat,
   dimension = 3,
   threshold = 0.05,
-  knearest = 15,
+  knearest = 20,
   method = "VR"
 )
 
@@ -148,6 +153,8 @@ pdf(file = "man/ExCirc1holeVR-sym-diff-2.pdf")
 plot(ExCirc1holeVR,nvar = 2, symmetric.diff = TRUE)
 dev.off()
 
+Circle1holeVR <- print(ExCirc1holeVR, only.return.table = T)
+xtable::print.xtable(xtable::xtable(Circle1holeVR,align = c("c","c","c","c","c","c"),file = "man/exCircle1holeVR-table.tex"))
 
 ExCirc1holedelanauy <- TopSA::TopSA(
   Ydat = Ydat,
@@ -169,6 +176,9 @@ dev.off()
 pdf(file = "man/ExCirc1holedelanauy-sym-diff-2.pdf")
 plot(ExCirc1holedelanauy,nvar = 2, symmetric.diff = TRUE)
 dev.off()
+
+Circle1holedelaunay <- print(ExCirc1holedelanauy, only.return.table = T)
+xtable::print.xtable(xtable::xtable(Circle1holedelaunay,align = c("c","c","c","c","c","c"),file = "man/exCircle1holedelaunay-table.tex"))
 
 
 
@@ -193,8 +203,8 @@ ExCirc2holesVR <- TopSA::TopSA(
   Ydat = Ydat,
   Xdat = Xdat,
   dimension = 3,
-  threshold = 0.01,
-  knearest = 25,
+  threshold = 0.05,
+  knearest = 20,
   method = "VR"
 )
 
@@ -217,7 +227,7 @@ ExCirc2holesdelanauy <- TopSA::TopSA(
   Ydat = Ydat,
   Xdat = Xdat,
   dimension = 3,
-  threshold = 0.01,
+  threshold = 0.005,
   method = "delanauy"
 )
 
@@ -242,8 +252,7 @@ n <- 1000
 X1 <- runif(n, a, b)
 X2 <- runif(n, a, b)
 X3 <- runif(n, a, b)
-X4 <- runif(n)
-Xdat <- data.frame(X1, X2, X3, X4)
+Xdat <- data.frame(X1, X2, X3)
 Ydat <- data.frame(Y = sensitivity::ishigami.fun(Xdat))
 
 
@@ -253,33 +262,38 @@ ExIshigamiVR <- TopSA::TopSA(
   Xdat = Xdat,
   dimension = 3,
   threshold = 0.03,
+  knearest = 25,
   method = "VR"
 )
 
 pdf(file = "man/ExIshigamiVR-reflection-1.pdf")
-plot(ExIshigamiVR, nvar = 1, with.reflection = TRUE)
+plot(ExIshigamiVR, nvar = 1, with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamiVR-sym-diff-1.pdf")
-plot(ExIshigamiVR, nvar = 1, symmetric.diff = TRUE)
+plot(ExIshigamiVR, nvar = 1, symmetric.diff = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamiVR-reflection-2.pdf")
-plot(ExIshigamiVR, nvar = 2, with.reflection = TRUE)
+plot(ExIshigamiVR, nvar = 2, with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamiVR-sym-diff-2.pdf")
-plot(ExIshigamiVR, nvar = 2, symmetric.diff = TRUE)
+plot(ExIshigamiVR, nvar = 2, symmetric.diff = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamiVR-reflection-3.pdf")
-plot(ExIshigamiVR, nvar = 3, with.reflection = TRUE)
+plot(ExIshigamiVR, nvar = 3, with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamiVR-sym-diff-3.pdf")
-plot(ExIshigamiVR, nvar = 3, symmetric.diff = TRUE)
+plot(ExIshigamiVR, nvar = 3, symmetric.diff = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamiVR-reflection-4.pdf")
-plot(ExIshigamiVR, nvar = 4, with.reflection = TRUE)
+plot(ExIshigamiVR, nvar = 4, with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamiVR-sym-diff-4.pdf")
-plot(ExIshigamiVR, nvar = 4, symmetric.diff = TRUE)
+plot(ExIshigamiVR, nvar = 4, symmetric.diff = TRUE, asp=0)
 dev.off()
+
+IshigamiVR <- print(ExIshigamiVR, only.return.table = T)
+xtable::print.xtable(xtable::xtable(IshigamiVR,align = c("c","c","c","c","c","c"),file = "man/exIshigamiVR-table.tex"))
+
 
 
 ExIshigamidelanauy <- TopSA::TopSA(
@@ -291,36 +305,44 @@ ExIshigamidelanauy <- TopSA::TopSA(
 )
 
 pdf(file = "man/ExIshigamidelanauy-reflection-1.pdf")
-plot(ExIshigamidelanauy, nvar = 1, with.reflection = TRUE)
+plot(ExIshigamidelanauy, nvar = 1, with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamidelanauy-sym-diff-1.pdf")
-plot(ExIshigamidelanauy, nvar = 1, symmetric.diff = TRUE)
+plot(ExIshigamidelanauy, nvar = 1, symmetric.diff = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamidelanauy-reflection-2.pdf")
-plot(ExIshigamidelanauy, nvar = 2, with.reflection = TRUE)
+plot(ExIshigamidelanauy, nvar = 2, with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamidelanauy-sym-diff-2.pdf")
-plot(ExIshigamidelanauy, nvar = 2, symmetric.diff = TRUE)
+plot(ExIshigamidelanauy, nvar = 2, symmetric.diff = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamidelanauy-reflection-3.pdf")
-plot(ExIshigamidelanauy, nvar = 3, with.reflection = TRUE)
+plot(ExIshigamidelanauy, nvar = 3, with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamidelanauy-sym-diff-3.pdf")
-plot(ExIshigamidelanauy, nvar = 3, symmetric.diff = TRUE)
+plot(ExIshigamidelanauy, nvar = 3, symmetric.diff = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamidelanauy-reflection-4.pdf")
-plot(ExIshigamidelanauy, nvar = 4, with.reflection = TRUE)
+plot(ExIshigamidelanauy, nvar = 4, with.reflection = TRUE, asp=0)
 dev.off()
 pdf(file = "man/ExIshigamidelanauy-sym-diff-4.pdf")
-plot(ExIshigamidelanauy, nvar = 4, symmetric.diff = TRUE)
+plot(ExIshigamidelanauy, nvar = 4, symmetric.diff = TRUE, asp=0)
 dev.off()
 
+Ishigamidelaunay <- print(ExIshigamidelanauy, only.return.table = T)
+xtable::print.xtable(xtable::xtable(Ishigamidelaunay,align = c("c","c","c","c","c","c"),file = "man/exIshigamidelaunay-table.tex"))
 
-save(file = "man/examples.Rdata",
-     ExIshigami,
-     ExCirc1hole,
-     ExCirc2holes,
-     ExLinear,
-     ExQuartic)
+
+save(
+  file = "man/examples.Rdata",
+  ExCirc1holedelanauy,
+  ExCirc1holeVR,
+  ExCirc2holesdelanauy,
+  ExCirc2holesVR,
+  ExIshigamidelanauy,
+  ExIshigamiVR,
+  ExLineardelanauy,
+  ExLinearVR
+)
 
 
