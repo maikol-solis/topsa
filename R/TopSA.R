@@ -417,79 +417,78 @@ plot.TopSA <- function(TopSAObj,
   manifold_sym_difference <-
     sf::st_sym_difference(manifold, manifold_reflectionx)
 
-  if (symmetric.diff) {
-    plot(
-      manifold_sym_difference,
-      axes = TRUE,
-      col = "orange",
-      ...
-    )
-    plot(
-      datapoints,
-      col = "black",
-      type = "p",
-      pch = ".",
-      cex = 3,
-      add = TRUE
-    )
-    plot(boundingbox,
-         border = "red",
-         lwd = 2,
-         add = TRUE)
 
+
+  # plotdata <-
+  #   data.frame(
+  #     TypeObject = c("Original", "Reflection", "Sym Diff"),
+  #     AreaObject = c()
+  #     geom = c(manifold, manifold_reflectionx, manifold_sym_difference)
+  #   )
+
+
+  if (symmetric.diff) {
+    ggplot() +
+      geom_sf(data = manifold_sym_difference, fill = "orange") +
+      geom_sf(data = datapoints,
+              shape = "*",
+              size = 2) +
+      geom_sf(
+        data = boundingbox,
+        color = "red",
+        fill = NA,
+        size = 1
+      ) +
+      theme_minimal()
   } else{
-    plot(
-      manifold,
-      axes = TRUE,
-      col = "deepskyblue",
-      border = "blue",
-      xlab = TopSAObj$result[[nvar]]$xname,
-      ylab = TopSAObj$result[[nvar]]$yname,
-      ...
-    )
-    plot(boundingbox,
-         border = "red",
-         lwd = 2,
-         add = TRUE)
-    plot(
-      datapoints,
-      col = "black",
-      type = "p",
-      pch = ".",
-      cex = 3,
-      add = TRUE
-    )
+    ggplot() +
+      geom_sf(data = manifold, fill = "deepskyblue", color = "blue" ) +
+      geom_sf(data = datapoints, shape = "*", size = 2) +
+      geom_sf(data = boundingbox, color = "red", fill = NA, size = 1 ) +
+      theme_minimal()
+
     if (with.reflection == FALSE & legend == TRUE) {
-      legend(
-        x = "bottomright",
-        y.intersp = 1,
-        legend = c(
-          paste0(
-            "Manifold Area: ",
-            round(TopSAObj$results[[nvar]]$Manifold.Area, 2)
-          ),
-          paste0("Box Area: ", round(TopSAObj$results[[nvar]]$Box.Area, 2)),
-          paste0(
-            "Geometric Correlation: ",
-            round(TopSAObj$results[[nvar]]$Geometric.Correlation, 2)
-          )
-        ),
-        border = c("blue", "red", "white"),
-        fill = c("deepskyblue", "white", "white")
-      )
+
+      #     legend(
+      #   x = "bottomright",
+      #   y.intersp = 1,
+      #   legend = c(
+      #     paste0(
+      #       "Manifold Area: ",
+      #       round(TopSAObj$results[[nvar]]$Manifold.Area, 2)
+      #     ),
+      #     paste0("Box Area: ", round(TopSAObj$results[[nvar]]$Box.Area, 2)),
+      #     paste0(
+      #       "Geometric Correlation: ",
+      #       round(TopSAObj$results[[nvar]]$Geometric.Correlation, 2)
+      #     )
+      #   ),
+      #   border = c("blue", "red", "white"),
+      #   fill = c("deepskyblue", "white", "white")
+      # )
 
     }
 
     if (with.reflection == TRUE) {
-      plot(manifold_reflectionx, col = "seagreen1", add = TRUE)
-      plot(
-        datapoints,
-        col = "black",
-        type = "p",
-        pch = ".",
-        cex = 3,
-        add = TRUE
-      )
+
+      ggplot() +
+        geom_sf(data = manifold, fill = "deepskyblue" ) +
+        geom_sf(data = manifold_reflectionx, fill = "seagreen1" ) +
+        geom_sf(data = datapoints, shape = "*", size = 2) +
+        geom_sf(data = boundingbox, color = "red", fill = NA, size = 1 ) +
+        theme_minimal()
+
+
+
+      # plot(manifold_reflectionx, col = "seagreen1", add = TRUE)
+      # plot(
+      #   datapoints,
+      #   col = "black",
+      #   type = "p",
+      #   pch = ".",
+      #   cex = 3,
+      #   add = TRUE
+      # )
 
 
       if (legend == TRUE) {
