@@ -108,6 +108,7 @@ estimate_sensitivity_index <-
     } else if (method == "VR") {
       index_Obj <-  VR_homology(ivar, Ydat, Xdat, dimension, knearest, threshold)
     } else{
+      index_Obj <- NULL
       stop("No method defined")
     }
     return(index_Obj)
