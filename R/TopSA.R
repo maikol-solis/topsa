@@ -285,22 +285,26 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, knearest, threshold) {
 Delanauy_homology <-
   function(ivar, Ydat, Xdat, dimension, threshold) {
 
+    idx <- order(Xdat[,ivar])
+    Xdat[,ivar] <- Xdat[idx,ivar]
+    Ydat <- Ydat[idx,]
+
+
+
     rx <- range(Xdat[,ivar])
-    ry <- range(Ydat[,])
+    ry <- range(Ydat)
     minx <- min(rx)
     miny <- min(ry)
     datapoints <-
       sf::st_as_sf(x = data.frame(
         x = (Xdat[, ivar] - minx) / (diff(rx)),
-        y = (Ydat[,] - miny) / diff(ry)
+        y = (Ydat - miny) / diff(ry)
       ),
       coords = c("x", "y"))
 
     triangulation <-
       sfdct::ct_triangulate(sf::st_union(datapoints),
-                            q = 30,
-                            S = 0
-                            )
+                            q = 30)                            )
     single_triangles <- sf::st_collection_extract(triangulation)
     # plot(
     #   single_triangles,
