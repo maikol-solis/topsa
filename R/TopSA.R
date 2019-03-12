@@ -366,7 +366,7 @@ Delanauy_homology <-
   }
 
 
-print.TopSA <- function(x, ...) {
+print.TopSA <- function(x, only.return.table = FALSE, ...) {
   sensitivity_table <- t(sapply(x$results, function(x) {
     unlist(x[c(
       "threshold",
@@ -384,6 +384,11 @@ print.TopSA <- function(x, ...) {
       'Geometric correlation',
       'Symmetric index')
   rownames(sensitivity_table) <- colnames(x$Xdat)
+
+  if(only.return.table == TRUE){
+    return(sensitivity_table)
+  }
+
 
   cat("\nCall:\n", deparse(x[['call']]), "\n", sep = "")
   cat("\nMethod used:",deparse(x[["call"]]$method), sep = "")
