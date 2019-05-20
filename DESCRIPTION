@@ -9,7 +9,8 @@ Author: Maikol Solís [aut, cre]
         Ronald A. Zuñiga-Rojas [ctb]
 Maintainer: Maikol Solís <maikol.solis@ucr.ac.cr>
 Description: Estimate sensitivity indices reconstructing the embedding manifold of the data. The reconstruction is done via a Vietoris Rips with a fixed radius. Then the homology of order 2 and the indices are estimated. 
-License: 
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true 
+Imports: ggplot2, igraph, pbmcapply, scales, sf, sfdct, methods
 RoxygenNote: 6.1.1
