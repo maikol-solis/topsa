@@ -1,30 +1,61 @@
-# Author: Maikol Solís
-#To create a robust function, I took as a template the script of Filippo Monari,
-#'sobolSmthSpl' from the package 'sensitivity'. However, the core estimations
-#are my original work.
+#' Title
+#'
+#' @param Ydat numeric vector of responses in a model.
+#' @param Xdat numeric matrix or data.frame of covariables.
+#' @param dimension number of homology groups to estimate. The only value
+#'   accepted is \code{dimension = 3}, but in future release this will change.
+#' @param threshold percent of radius or sizes of triangles to keep to smooth
+#'   the homology complex. Defaults to `3`.
+#' @param knearest number of the nearest neigbors keep to built the homology
+#'   complex
+#' @param method type of method to build the homology complex. Two choices are
+#'   accepted: \code{delanauy} o \code{VR} (Vietoris-Rips).
+#' @param mc.cores number of cores to use in the procedure. Defaults \code{1}.
+#'
+#' @return Put output
+#'
+#' @export
+#'
+#' @examples
+#'
+#' ishigami.fun <- function(X) {
+#' A <- 7
+#' B <- 0.1
+#' sin(X[, 1]) + A * sin(X[, 2])^2 + B * X[, 3]^4 * sin(X[, 1])
+#' }
+#'
+#' X <- matrix(runif(3*100, -pi, pi), ncol = 3)
+#' Y <- ishigami.fun(X)
+#'
+#' estimation <- TopSA(Ydat = Y, Xdat = X)
 
+
+#'
+#' @importFrom methods is
+#' @importFrom stats dist quantile
 TopSA <-
   function(Ydat,
            Xdat,
            dimension = 3,
            threshold = 0.05,
            knearest = 20,
-           method = c("delanauy", "VR")) {
+           method = c("delanauy", "VR"),
+           mc.cores = 1) {
     #Arguments:
     #Y: matrix of model outputs (only one column)
     #X: matrix model parameters
     #radius: radius to build the neighborhood graph
     #dimension: number of homology spaces
     #MAIN
-    # if (!requireNamespace("scales", quietly = TRUE)) {
-    #   stop("Please install the package scales: install.packages('scales')")
-    # }#end-require-scales
-    # if (!requireNamespace("igraph", quietly = TRUE)) {
-    #   stop("Please install the package igraph: install.packages('igraph')")
-    # }#end-require-igraph
-    # if (!requireNamespace("sf", quietly = TRUE)) {
-    #   stop("Please install the package sf: install.packages('sf')")
-    # }#end-require-sp
+    if (!requireNamespace("scales", quietly = TRUE)) {
+      stop("Please install the package scales: install.packages('scales')")
+    }#end-require-scales
+    if (!requireNamespace("igraph", quietly = TRUE)) {
+      stop("Please install the package igraph: install.packages('igraph')")
+    }#end-require-igraph
+    if (!requireNamespace("sf", quietly = TRUE)) {
+      stop("Please install the package sf: install.packages('sf')")
+    }#end-require-sf
     # # if (!requireNamespace("rgeos", quietly = TRUE)) {
     # #   stop("Please install the package rgeos: install.packages('rgeos')")
     # # }#end-require-rgeos
@@ -36,6 +67,8 @@ TopSA <-
     # # }#end-require-multimode
 
 
+    Xdat <- as.data.frame(Xdat)
+    Ydat <- as.data.frame(Ydat)
 
     ANS <- list()
     ANS[['call']] <- match.call()
@@ -59,7 +92,8 @@ TopSA <-
       knearest = knearest,
       threshold = threshold,
       method = method,
-      mc.cores = min(ncol(Xdat), parallel::detectCores() - 1)
+      mc.cores.inner = mc.cores,
+      mc.cores = mc.cores
     ),
     silent = TRUE)
 
@@ -101,12 +135,13 @@ estimate_sensitivity_index <-
             dimension,
             knearest,
             threshold,
-            method) {
+            method,
+            mc.cores.inner) {
     if (method == "delanauy") {
       index_Obj <-
         Delanauy_homology(ivar, Ydat, Xdat, dimension, threshold)
     } else if (method == "VR") {
-      index_Obj <-  VR_homology(ivar, Ydat, Xdat, dimension, knearest, threshold)
+      index_Obj <-  VR_homology(ivar, Ydat, Xdat, dimension, knearest, threshold, mc.cores.inner)
     } else{
       index_Obj <- NULL
       stop("No method defined")
@@ -117,7 +152,7 @@ estimate_sensitivity_index <-
 
 
 
-VR_homology <- function(ivar, Ydat, Xdat, dimension, knearest, threshold) {
+VR_homology <- function(ivar, Ydat, Xdat, dimension, knearest, threshold, mc.cores.inner) {
   constructHOMOLOGY <-
     function (ivar, Ydat, Xdat, dimension, threshold) {
       Y <- as.matrix(Ydat)
@@ -199,6 +234,7 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, knearest, threshold) {
 
     } #end-function-constructor
 
+  Ydat <- as.matrix(Ydat)
 
   H <- constructHOMOLOGY(ivar, Ydat, Xdat, dimension, threshold)
 
@@ -209,9 +245,6 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, knearest, threshold) {
   Vertices <- data.frame (name = vv$name[idxObj],
                           x = vv$x[idxObj],
                           y = vv$y[idxObj])
-
-  nc <-
-    ceiling((parallel::detectCores() - 1 - ncol(Xdat)) / ncol(Xdat))
 
   l <-  try(pbmcapply::pbmclapply(
     X = 1:nrow(H2),
@@ -224,7 +257,7 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, knearest, threshold) {
       rownames(Triangle) <- NULL
       p <- sf::st_polygon(list(Triangle))
     },
-    mc.cores = nc
+    mc.cores = mc.cores.inner
   ),
   silent = T)
 
@@ -245,13 +278,14 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, knearest, threshold) {
   }
 
   mp <- sf::st_multipolygon(l)
-  mp_union <- sf::st_union(mp)
+  mp_union <- sf::st_union(mp) - c(min(Xdat[, ivar]), min(Ydat))
   bb <- sf::st_make_grid(x = mp_union, n = 1)
 
   reflectiony <-  matrix(c(1, 0, 0, -1), 2, 2)
 
   mp_reflectiony <-
-    mp_union * reflectiony + c(0, 2 * sf::st_centroid(mp)[2])
+    mp_union * reflectiony + c(0,   min(mp_union[[1]][, 2]) +  max(mp_union[[1]][, 2]))
+
 
   # plot(mp_union, asp = 0, col = "blue", axes = TRUE)
   # plot(mp_reflectiony,
@@ -262,6 +296,9 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, knearest, threshold) {
 
   mp_sym_difference <-
     sf::st_sym_difference(mp_union, mp_reflectiony)
+
+
+
   # plot(mp_sym_difference, col = "blue", asp=0)
   mp_sym_difference_area <- sf::st_area(mp_sym_difference)
 
@@ -277,7 +314,7 @@ VR_homology <- function(ivar, Ydat, Xdat, dimension, knearest, threshold) {
       Geometric.Correlation = 1 - Manifold.Area / Box.Area,
       Symmetric.Diff.Area = mp_sym_difference_area,
       Symmetric.Index = mp_sym_difference_area / (2 * Manifold.Area),
-      manifold.plot = mp_union
+      manifold.plot = mp_union + c(min(Xdat[, ivar]), min(Ydat))
     )
   )
 }
@@ -287,14 +324,13 @@ Delanauy_homology <-
 
     idx <- order(Xdat[,ivar])
     Xdat[,ivar] <- Xdat[idx,ivar]
-    Ydat <- Ydat[idx,]
-
-
+    Ydat <- as.matrix(Ydat[idx,])
 
     rx <- range(Xdat[,ivar])
     ry <- range(Ydat)
-    minx <- min(rx)
-    miny <- min(ry)
+    minx <- min(Xdat[,ivar])
+    miny <- min(Ydat)
+    maxy <- max(Ydat)
     datapoints <-
       sf::st_as_sf(x = data.frame(
         x = (Xdat[, ivar] - minx) / (diff(rx)),
@@ -304,7 +340,8 @@ Delanauy_homology <-
 
     triangulation <-
       sfdct::ct_triangulate(sf::st_union(datapoints),
-                            q = 30)                            )
+                            S = length(datapoints$geometry),
+                            q = 40)
     single_triangles <- sf::st_collection_extract(triangulation)
     # plot(
     #   single_triangles,
@@ -321,32 +358,40 @@ Delanauy_homology <-
     #        col = "blue")
     # abline(h = median(single_triangles_area) , col = "green")
     if (exists("threshold") == FALSE) {
-     threshold <- 0.1
+     threshold <- 0.90
     }
-    cutoff <- quantile(single_triangles_area, 1-threshold)
-    idx <- single_triangles_area <= cutoff
+    cutoff <- quantile(single_triangles_area, threshold)
+    idx <- single_triangles_area <=cutoff
 
     single_triangles <- sf::st_multipolygon(single_triangles[idx])
 
     A <- matrix(c(diff(rx),0,0,diff(ry)),nrow = 2)
-    b <- c(minx, miny)
-    single_triangles <- single_triangles*A +b
+    #b <- c(minx, miny)
+    single_triangles <- single_triangles*A #+b
     # plot(single_triangles,
     #      asp = 1,
     #      col = "blue",
     #      border = "white")
 
-    mp_union <- sf::st_union(single_triangles)
+    mp_union <-
+      sf::st_union(single_triangles)
+
     bb <- sf::st_make_grid(x = mp_union, n = 1)
+
+    bbox <- sf::st_bbox(mp_union)
 
     reflectiony <-  matrix(c(1, 0, 0, -1), 2, 2)
 
-    mp_reflectiony <-
-      mp_union * reflectiony + c(0, 2 * sf::st_centroid(mp_union)[2])
+    pointsInComplex <- do.call(rbind, do.call(rbind, mp_union))
 
+    mp_reflectiony <-
+      (mp_union)  * reflectiony +
+      c(0,   min(pointsInComplex[, 2]) + max(pointsInComplex[, 2]))
 
     mp_sym_difference <-
       sf::st_sym_difference(mp_union, mp_reflectiony)
+
+
 
     mp_sym_difference_area <- sf::st_area(mp_sym_difference)
 
@@ -360,164 +405,143 @@ Delanauy_homology <-
         Box.Area = Box.Area,
         Geometric.Correlation = 1 - Manifold.Area / Box.Area,
         Symmetric.Index = mp_sym_difference_area / (2 * Manifold.Area),
-        manifold.plot = mp_union
+        manifold.plot = mp_union + c(min(Xdat[, ivar]), min(Ydat))
       )
     )
   }
 
 
-print.TopSA <- function(x, only.return.table = FALSE, ...) {
-  sensitivity_table <- t(sapply(x$results, function(x) {
-    unlist(x[c(
-      "threshold",
-      "Manifold.Area",
-      "Box.Area",
-      "Geometric.Correlation",
-      "Symmetric.Index"
-    )])
-  }))
-
-  colnames(sensitivity_table) <-
-    c('Threshold',
-      'Manifold Area',
-      'Box Area' ,
-      'Geometric correlation',
-      'Symmetric index')
-  rownames(sensitivity_table) <- colnames(x$Xdat)
-
-  if(only.return.table == TRUE){
-    return(sensitivity_table)
-  }
-
-
-  cat("\nCall:\n", deparse(x[['call']]), "\n", sep = "")
-  cat("\nMethod used:",deparse(x[["call"]]$method), sep = "")
-  cat("\nNumber of variables:", ncol(x[['Xdat']]), "\n")
-  cat("\nNumber of observations:", nrow(x[['Ydat']]), "\n")
-  cat("\nFirst order indices\n")
-  print(sensitivity_table[, ])
-  # return(sensitivity_table)
-}
 
 
 
-plot.TopSA <- function(TopSAObj,
-                       nvar = 1,
-                       with.reflection = FALSE,
-                       symmetric.diff = FALSE,
-                       legend = FALSE,
-                       ...) {
-  manifold <- TopSAObj$result[[nvar]]$manifold.plot
-  boundingbox <- sf::st_make_grid(x = manifold, n = 1)
-  datapoints <-
-    sf::st_multipoint(as.matrix(cbind(TopSAObj$Xdat[, nvar], TopSAObj$Ydat)))
-  reflectionx <-  matrix(c(1, 0, 0, -1), 2, 2)
-  manifold_reflectionx <-
-    manifold * reflectionx + c(0, 2 * sf::st_centroid(manifold)[2])
-  manifold_sym_difference <-
-    sf::st_sym_difference(manifold, manifold_reflectionx)
+
+
+  # ggplot2::ggplot() +
+  #   ggplot2::geom_sf(data = manifold, ggplot2::aes(fill = "Estimated")) +
+  #   ggplot2::geom_sf(data = manifold_reflectionx, ggplot2::aes(fill = "Sym. Reflection")) +
+  #   ggplot2::geom_sf(data = manifold_intersection, ggplot2::aes(fill = "Intersection")) +
+  #   ggplot2::scale_fill_manual(
+  #     name = "Legend",
+  #     values = c(
+  #       "Estimated" = "deepskyblue",
+  #       "Sym. Reflection" =  "orange",
+  #       "Intersection" = "grey90"
+  #     ),
+  #     breaks = c("Estimated" ,
+  #                "Sym. Reflection",
+  #                "Intersection")
+  #   ) +
+  #   ggplot2::geom_sf(data = datapoints, shape = "*", size = 2) +
+  #   ggplot2::geom_sf(
+  #     data = boundingbox,
+  #     color = "red",
+  #     fill = NA,
+  #     size = 1
+  #   ) +
+  #   ggplot2::theme_minimal()
 
 
 
-  # plotdata <-
-  #   data.frame(
-  #     TypeObject = c("Original", "Reflection", "Sym Diff"),
-  #     AreaObject = c()
-  #     geom = c(manifold, manifold_reflectionx, manifold_sym_difference)
-  #   )
 
 
-  if (symmetric.diff) {
-    ggplot() +
-      geom_sf(data = manifold_sym_difference, fill = "orange") +
-      geom_sf(data = datapoints,
-              shape = "*",
-              size = 2) +
-      geom_sf(
-        data = boundingbox,
-        color = "red",
-        fill = NA,
-        size = 1
-      ) +
-      theme_minimal()
-  } else{
-    ggplot() +
-      geom_sf(data = manifold, fill = "deepskyblue", color = "blue" ) +
-      geom_sf(data = datapoints, shape = "*", size = 2) +
-      geom_sf(data = boundingbox, color = "red", fill = NA, size = 1 ) +
-      theme_minimal()
-
-    if (with.reflection == FALSE & legend == TRUE) {
-
-      #     legend(
-      #   x = "bottomright",
-      #   y.intersp = 1,
-      #   legend = c(
-      #     paste0(
-      #       "Manifold Area: ",
-      #       round(TopSAObj$results[[nvar]]$Manifold.Area, 2)
-      #     ),
-      #     paste0("Box Area: ", round(TopSAObj$results[[nvar]]$Box.Area, 2)),
-      #     paste0(
-      #       "Geometric Correlation: ",
-      #       round(TopSAObj$results[[nvar]]$Geometric.Correlation, 2)
-      #     )
-      #   ),
-      #   border = c("blue", "red", "white"),
-      #   fill = c("deepskyblue", "white", "white")
-      # )
-
-    }
-
-    if (with.reflection == TRUE) {
-
-      ggplot() +
-        geom_sf(data = manifold, fill = "deepskyblue" ) +
-        geom_sf(data = manifold_reflectionx, fill = "seagreen1" ) +
-        geom_sf(data = datapoints, shape = "*", size = 2) +
-        geom_sf(data = boundingbox, color = "red", fill = NA, size = 1 ) +
-        theme_minimal()
-
-
-
-      # plot(manifold_reflectionx, col = "seagreen1", add = TRUE)
-      # plot(
-      #   datapoints,
-      #   col = "black",
-      #   type = "p",
-      #   pch = ".",
-      #   cex = 3,
-      #   add = TRUE
-      # )
-
-
-      if (legend == TRUE) {
-        legend(
-          x = "bottomright",
-          y.intersp = 1,
-          legend = c(
-            paste0(
-              "Manifold Area: ",
-              round(TopSAObj$results[[nvar]]$Manifold.Area, 2)
-            ),
-            paste0(
-              "Symmetric Reflection Area: ",
-              round(TopSAObj$results[[nvar]]$Manifold.Area, 2)
-            ),
-            paste0("Box Area: ", round(TopSAObj$results[[nvar]]$Box.Area, 2)),
-            paste0(
-              "Geometric Correlation: ",
-              round(TopSAObj$results[[nvar]]$Geometric.Correlation, 2)
-            )
-          ),
-          border = c("blue", "black", "red", "white"),
-          fill = c("deepskyblue", "seagreen1", "white", "white")
-        )
-      }
-    }
-  }
-}
-
+  #   # plotdata <-
+  # #   data.frame(
+  # #     TypeObject = c("Original", "Reflection", "Sym Diff"),
+  # #     AreaObject = c()
+  # #     geom = c(manifold, manifold_reflectionx, manifold_sym_difference)
+  # #   )
+  #
+  #
+  # if (symmetric.diff) {
+  #   ggplot2::ggplot() +
+  #     ggplot2::geom_sf(data = manifold_sym_difference, fill = "orange") +
+  #     ggplot2::geom_sf(data = datapoints,
+  #             shape = "*",
+  #             size = 2) +
+  #     ggplot2::geom_sf(
+  #       data = boundingbox,
+  #       color = "red",
+  #       fill = NA,
+  #       size = 1
+  #     ) +
+  #     ggplot2::theme_minimal()
+  # } else{
+  #   ggplot2::ggplot() +
+  #     ggplot2::geom_sf(data = manifold, fill = "deepskyblue", color = "blue" ) +
+  #     ggplot2::geom_sf(data = datapoints, shape = "*", size = 2) +
+  #     ggplot2::geom_sf(data = boundingbox, color = "red", fill = NA, size = 1 ) +
+  #     ggplot2::theme_minimal()
+  #
+  #   if (with.reflection == FALSE & legend == TRUE) {
+  #
+  #     #     legend(
+  #     #   x = "bottomright",
+  #     #   y.intersp = 1,
+  #     #   legend = c(
+  #     #     paste0(
+  #     #       "Manifold Area: ",
+  #     #       round(TopSAObj$results[[nvar]]$Manifold.Area, 2)
+  #     #     ),
+  #     #     paste0("Box Area: ", round(TopSAObj$results[[nvar]]$Box.Area, 2)),
+  #     #     paste0(
+  #     #       "Geometric Correlation: ",
+  #     #       round(TopSAObj$results[[nvar]]$Geometric.Correlation, 2)
+  #     #     )
+  #     #   ),
+  #     #   border = c("blue", "red", "white"),
+  #     #   fill = c("deepskyblue", "white", "white")
+  #     # )
+  #
+  #   }
+  #
+  #   if (with.reflection == TRUE) {
+  #
+  #     ggplot2::ggplot() +
+  #       ggplot2::geom_sf(data = manifold, fill = "deepskyblue" ) +
+  #       ggplot2::geom_sf(data = manifold_reflectionx, fill = "seagreen1" ) +
+  #       ggplot2::geom_sf(data = datapoints, shape = "*", size = 2) +
+  #       ggplot2::geom_sf(data = boundingbox, color = "red", fill = NA, size = 1 ) +
+  #       ggplot2::theme_minimal()
+  #
+  #
+  #
+  #     # plot(manifold_reflectionx, col = "seagreen1", add = TRUE)
+  #     # plot(
+  #     #   datapoints,
+  #     #   col = "black",
+  #     #   type = "p",
+  #     #   pch = ".",
+  #     #   cex = 3,
+  #     #   add = TRUE
+  #     # )
+  #
+  #
+  #     if (legend == TRUE) {
+  #       legend(
+  #         x = "bottomright",
+  #         y.intersp = 1,
+  #         legend = c(
+  #           paste0(
+  #             "Manifold Area: ",
+  #             round(TopSAObj$results[[nvar]]$Manifold.Area, 2)
+  #           ),
+  #           paste0(
+  #             "Symmetric Reflection Area: ",
+  #             round(TopSAObj$results[[nvar]]$Manifold.Area, 2)
+  #           ),
+  #           paste0("Box Area: ", round(TopSAObj$results[[nvar]]$Box.Area, 2)),
+  #           paste0(
+  #             "Geometric Correlation: ",
+  #             round(TopSAObj$results[[nvar]]$Geometric.Correlation, 2)
+  #           )
+  #         ),
+  #         border = c("blue", "black", "red", "white"),
+  #         fill = c("deepskyblue", "seagreen1", "white", "white")
+  #       )
+  #     }
+  #   }
+  # }
+#}
 
 
 # plot.TopSA <- function(HOMOLOGYObj, n = 5000,...) {
