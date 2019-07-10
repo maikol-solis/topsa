@@ -58,7 +58,7 @@ topsa <-
            threshold.area = 0.9,
            threshold.radius = 0.05,
            knearest = 20,
-           method = "delanauy") {
+           method = "VR") {
     #Arguments:
     #Y: matrix of model outputs (only one column)
     #X: matrix model parameters
@@ -200,8 +200,9 @@ estimate_sensitivity_index <-
             threshold.radius,
             method) {
     if (method == "delanauy") {
-      index_Obj <-
-        Delanauy_homology(ivar, Ydat, Xdat, dimension, threshold.area)
+     stop("Method not defined")
+      # index_Obj <-
+     #  Delanauy_homology(ivar, Ydat, Xdat, dimension, threshold.area)
     } else if (method == "VR") {
       index_Obj <-
         VR_homology(ivar, Ydat, Xdat, dimension, knearest, threshold.radius)
@@ -422,101 +423,101 @@ VR_homology <-
     )
   }
 
-Delanauy_homology <-
-  function(ivar, Ydat, Xdat, dimension, threshold) {
-    idx <- order(Xdat[, ivar])
-    Xdat[, ivar] <- Xdat[idx, ivar]
-    Ydat <- as.matrix(Ydat[idx, ])
-
-    rx <- range(Xdat[, ivar])
-    ry <- range(Ydat)
-    minx <- min(Xdat[, ivar])
-    miny <- min(Ydat)
-    maxy <- max(Ydat)
-    datapoints <-
-      sf::st_as_sf(x = data.frame(
-        x = (Xdat[, ivar] - minx) / (diff(rx)),
-        y = (Ydat - miny) / diff(ry)
-      ),
-      coords = c("x", "y"))
-
-    triangulation <- sfdct::ct_triangulate(
-      sf::st_union(datapoints),
-      S = length(datapoints$geometry),
-      q = 40
-    )
-
-    single_triangles <- sf::st_collection_extract(triangulation)
-    # plot(
-    #   single_triangles,
-    #   axes = TRUE,
-    #   asp = 1,
-    #   col = "blue",
-    #   border = "white"
-    # )
-    single_triangles_area <-  sf::st_area(single_triangles)
-    # plot(single_triangles_area)
-    # abline(h = boxplot(single_triangles_area, plot = FALSE)$stats,
-    #        col = "red")
-    # abline(h = mean(single_triangles_area) + sd(single_triangles_area),
-    #        col = "blue")
-    # abline(h = median(single_triangles_area) , col = "green")
-    if (exists("threshold") == FALSE) {
-      threshold <- 0.90
-    }
-    cutoff <- quantile(single_triangles_area, threshold)
-    idx <- single_triangles_area <= cutoff
-
-    single_triangles <- sf::st_multipolygon(single_triangles[idx])
-
-    A <- matrix(c(diff(rx), 0, 0, diff(ry)), nrow = 2)
-    #b <- c(minx, miny)
-    #
-    #
-    single_triangles <- single_triangles * A #+b
-
-
-    # plot(single_triangles,
-    #      asp = 1,
-    #      col = "blue",
-    #      border = "white")
-
-    mp_union <-
-      sf::st_union(single_triangles)
-
-    bb <- sf::st_make_grid(x = mp_union, n = 1)
-
-    bbox <- sf::st_bbox(mp_union)
-
-    reflectiony <-  matrix(c(1, 0, 0, -1), 2, 2)
-
-    xy_original <- extract_XY_coords(mp_union)
-
-    mp_reflectiony <-
-      (mp_union)  * reflectiony +
-      c(0,   min(xy_original$y) + max(xy_original$y))
-
-    mp_sym_difference <-
-      sf::st_sym_difference(mp_union, mp_reflectiony)
-
-
-
-    mp_sym_difference_area <- sf::st_area(mp_sym_difference)
-
-    Manifold.Area <- sf::st_area(mp_union)
-    Box.Area <- sf::st_area(bb)
-
-    return(
-      list(
-        threshold = cutoff,
-        Manifold.Area = Manifold.Area,
-        Box.Area = Box.Area,
-        Geometric.Correlation = 1 - Manifold.Area / Box.Area,
-        Symmetric.Index = mp_sym_difference_area / (2 * Manifold.Area),
-        manifold.plot = mp_union + c(min(Xdat[, ivar]), min(Ydat))
-      )
-    )
-  }
+# Delanauy_homology <-
+#   function(ivar, Ydat, Xdat, dimension, threshold) {
+#     idx <- order(Xdat[, ivar])
+#     Xdat[, ivar] <- Xdat[idx, ivar]
+#     Ydat <- as.matrix(Ydat[idx, ])
+#
+#     rx <- range(Xdat[, ivar])
+#     ry <- range(Ydat)
+#     minx <- min(Xdat[, ivar])
+#     miny <- min(Ydat)
+#     maxy <- max(Ydat)
+#     datapoints <-
+#       sf::st_as_sf(x = data.frame(
+#         x = (Xdat[, ivar] - minx) / (diff(rx)),
+#         y = (Ydat - miny) / diff(ry)
+#       ),
+#       coords = c("x", "y"))
+#
+#     triangulation <- sfdct::ct_triangulate(
+#       sf::st_union(datapoints),
+#       S = length(datapoints$geometry),
+#       q = 40
+#     )
+#
+#     single_triangles <- sf::st_collection_extract(triangulation)
+#     # plot(
+#     #   single_triangles,
+#     #   axes = TRUE,
+#     #   asp = 1,
+#     #   col = "blue",
+#     #   border = "white"
+#     # )
+#     single_triangles_area <-  sf::st_area(single_triangles)
+#     # plot(single_triangles_area)
+#     # abline(h = boxplot(single_triangles_area, plot = FALSE)$stats,
+#     #        col = "red")
+#     # abline(h = mean(single_triangles_area) + sd(single_triangles_area),
+#     #        col = "blue")
+#     # abline(h = median(single_triangles_area) , col = "green")
+#     if (exists("threshold") == FALSE) {
+#       threshold <- 0.90
+#     }
+#     cutoff <- quantile(single_triangles_area, threshold)
+#     idx <- single_triangles_area <= cutoff
+#
+#     single_triangles <- sf::st_multipolygon(single_triangles[idx])
+#
+#     A <- matrix(c(diff(rx), 0, 0, diff(ry)), nrow = 2)
+#     #b <- c(minx, miny)
+#     #
+#     #
+#     single_triangles <- single_triangles * A #+b
+#
+#
+#     # plot(single_triangles,
+#     #      asp = 1,
+#     #      col = "blue",
+#     #      border = "white")
+#
+#     mp_union <-
+#       sf::st_union(single_triangles)
+#
+#     bb <- sf::st_make_grid(x = mp_union, n = 1)
+#
+#     bbox <- sf::st_bbox(mp_union)
+#
+#     reflectiony <-  matrix(c(1, 0, 0, -1), 2, 2)
+#
+#     xy_original <- extract_XY_coords(mp_union)
+#
+#     mp_reflectiony <-
+#       (mp_union)  * reflectiony +
+#       c(0,   min(xy_original$y) + max(xy_original$y))
+#
+#     mp_sym_difference <-
+#       sf::st_sym_difference(mp_union, mp_reflectiony)
+#
+#
+#
+#     mp_sym_difference_area <- sf::st_area(mp_sym_difference)
+#
+#     Manifold.Area <- sf::st_area(mp_union)
+#     Box.Area <- sf::st_area(bb)
+#
+#     return(
+#       list(
+#         threshold = cutoff,
+#         Manifold.Area = Manifold.Area,
+#         Box.Area = Box.Area,
+#         Geometric.Correlation = 1 - Manifold.Area / Box.Area,
+#         Symmetric.Index = mp_sym_difference_area / (2 * Manifold.Area),
+#         manifold.plot = mp_union + c(min(Xdat[, ivar]), min(Ydat))
+#       )
+#     )
+#   }
 
 
 
