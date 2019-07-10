@@ -5,7 +5,7 @@
 \title{Topological Sensitivity Analysis}
 \usage{
 topsa(Ydat, Xdat, dimension = 3, threshold.area = 0.9,
-  threshold.radius = 0.05, knearest = 20, method = "delanauy")
+  threshold.radius = 0.05, knearest = 20, method = "VR")
 }
 \arguments{
 \item{Ydat}{numeric vector of responses in a model.}
