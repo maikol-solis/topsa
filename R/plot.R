@@ -1,16 +1,15 @@
-#' Plot method for objects \code{TopSA}
+#' plot \code{topsa} objects
 #'
-#' Plot the Complex, symmetric reflection and symmetric diffrence for and object
-#' of class \code{\ĺink{TopSA}}
+#' Plot method for objects of class \code{topsa}.
 #'
-#' @param TopSAObj an object of class \code{TopSA}
+#' @param topsaObj an object of class \code{topsa}
 #' @param nvar  it could be a secuence from 1 to the number of variables
 #'   indicating which variables should be plotted. It could be the character
 #'   'all' for plot all the variables.
 #' @param ... further arguments passed to the \code{plot} function
 #'
-#' @return A plot of generated with the output of \code{\link{TopSA}} . For each
-#' variable in the model, it creates the plot of the correponding complex, its
+#' @return A plot of generated with the output of \code{topsa}. For each
+#' variable in the model, it creates the plot of the correponding manifold, its
 #' symmetric reflection and its symmetric difference.
 #' @export
 #'
@@ -25,25 +24,27 @@
 #' X <- matrix(runif(3*100, -pi, pi), ncol = 3)
 #' Y <- ishigami.fun(X)
 #'
-#' estimation <- sobolnp(Y = Y, X = X, nboot = 5)
+#' estimation <- topsa(Ydat = Y, Xdat = X)
 #'
 #' plot(estimation)
-#'
-# @importFrom
 
-plot <- function(TopSAObj, nvar = "all", ...) {
-  UseMethod("plot", TopSAObj)
+
+plot <- function(topsaObj, nvar = "all", ...) {
+  UseMethod("plot", topsaObj)
 }
 
-# #' @export
-# #' @rdname plot
-plot.TopSA <- function(TopSAObj,
+#' @export
+#' @rdname plot
+plot.topsa <- function(topsaObj,
                        nvar = "all",
                        ...) {
+  if (class(topsaObj)!= "topsa"){
+    stop("This function only accepts 'topsa' class objects")
+  }
 
   if (is.character(nvar)) {
     if (nvar == "all") {
-      nvar = seq(1, length(TopSAObj$results))
+      nvar = seq(1, length(topsaObj$results))
     } else  {
       message("Please enter 'all' or vector of values to plot.")
     }
@@ -56,35 +57,68 @@ plot.TopSA <- function(TopSAObj,
 
   manifold.all <- NULL
 
-  for (k in nvar){
+  for (k in nvar) {
+    manifold <- topsaObj$result[[k]]$manifold.plot
 
+    mp_origin_coords <- sf::st_coordinates(manifold)
 
+    manifold <-
+      manifold - c(min(mp_origin_coords[,"X"]), min(mp_origin_coords[,"Y"]))
+    mp_coordinates <- sf::st_coordinates(manifold)
 
-    manifold <- TopSAObj$result[[k]]$manifold.plot
+    bb <- sf::st_make_grid(x = manifold, n = 1)
 
-    Xcoord <- manifold[[1]][, 1]
-    Ycoord <- manifold[[1]][, 2]
+    reflection <-  matrix(c(1, 0, 0, -1), 2, 2)
+
+    #    xy_original <- extract_XY_coords(mp_union)
+
+    manifold_reflectionx <- (manifold * reflection)
+
+    # mp_coordinates_reflection <- sf::st_coordinates(mp_reflection)
+
+    manifold_reflectionx <- manifold_reflectionx +
+      c(0, 2 * mean(mp_coordinates[, "Y"]))
+    # c(0, min(mp_coordinates_reflection[, "Y"]))
 
 
     boundingbox <- sf::st_make_grid(x = manifold, n = 1)
 
     datapoints <-
-      sf::st_multipoint(as.matrix(cbind(TopSAObj$Xdat[, k], TopSAObj$Ydat)))
+      sf::st_multipoint(as.matrix(cbind(topsaObj$Xdat[, k], topsaObj$Ydat)))
 
 
-    reflectionx <-  matrix(c(1, 0, 0, -1), 2, 2)
-
-    manifold_reflectionx <-
-      ((manifold - c(min(Xcoord), min(Ycoord))) * reflectionx +
-         c(0,   min(Ycoord) +  max(Ycoord))) +
-      c(min(Xcoord), min(Ycoord))
 
 
-    manifold_sym_difference <-
-      sf::st_sym_difference(manifold, manifold_reflectionx)
+
+#
+#     reflectionx <-  matrix(c(1, 0, 0, -1), 2, 2)
+#
+#     manifold_reflectionx <-
+#       (manifold - c(min(xy_original$x), min(xy_original$y))) * reflectionx
+#
+#     xy_reflection <- extract_XY_coords(manifold_reflectionx)
+#
+#     manifold_reflectionx <-
+#       manifold_reflectionx - c(0, min(xy_reflection$y) + max(xy_reflection$y))
+#
+#
+#     manifold_reflectionx <-
+#       manifold_reflectionx + c(min(xy_original$x), min(xy_original$y))
+#
+#
+#     manifold_sym_difference <-
+#       sf::st_sym_difference(manifold, manifold_reflectionx)
 
     manifold_intersection <-
       sf::st_intersection(manifold, manifold_reflectionx)
+
+    manifold <-
+      manifold + c(min(mp_origin_coords[, "X"]), min(mp_origin_coords[, "Y"]))
+    manifold_reflectionx <-
+      manifold_reflectionx + c(min(mp_origin_coords[, "X"]), min(mp_origin_coords[, "Y"]))
+    manifold_intersection <-
+      manifold_intersection + c(min(mp_origin_coords[, "X"]), min(mp_origin_coords[, "Y"]))
+boundingbox <- boundingbox + c(min(mp_origin_coords[, "X"]), min(mp_origin_coords[, "Y"]))
 
     object_type <- NULL
 
@@ -125,11 +159,12 @@ plot.TopSA <- function(TopSAObj,
   }
 
   ggplot2::ggplot() +
-    ggplot2::geom_sf(data = manifold.all, ggplot2::aes(
-      fill = object_type,
-      size = object_type,
-      color = object_type
-    )) +
+    ggplot2::geom_sf(data = manifold.all,
+                     ggplot2::aes(
+                       fill = object_type,
+                       size = object_type,
+                       color = object_type
+                     )) +
     ggplot2::scale_fill_manual(
       name = "Estimated Areas",
       values = c(
@@ -153,7 +188,8 @@ plot.TopSA <- function(TopSAObj,
         "Intersection" = 1,
         "Bounding Box" = 2,
         "DataPoints" = 0.1
-      ), guide = FALSE
+      ),
+      guide = FALSE
     ) +
     ggplot2::scale_color_manual(
       name = "",
@@ -163,10 +199,10 @@ plot.TopSA <- function(TopSAObj,
         "Intersection" = NA,
         "Bounding Box" = "#e31a1c",
         "DataPoints" = "grey50"
-      ), guide = FALSE
+      ),
+      guide = FALSE
     ) +
-    ggplot2::facet_wrap(~variable) +
+    ggplot2::facet_wrap( ~ variable) +
     ggplot2::coord_sf() +
-    ggplot2::theme_minimal()
+    ggplot2::theme_minimal(...)
 }
-
