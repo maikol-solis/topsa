@@ -2,15 +2,15 @@
 % Please edit documentation in R/print.R
 \name{print}
 \alias{print}
-\alias{print.TopSA}
-\title{Plot method for objects \code{TopSA}}
+\alias{print.topsa}
+\title{print \code{topsa} objects}
 \usage{
-print(TopSAObj, ...)
+print(topsaObj, ...)
 
-\method{print}{TopSA}(TopSAObj, only.return.table = FALSE, ...)
+\method{print}{topsa}(topsaObj, only.return.table = FALSE, ...)
 }
 \arguments{
-\item{TopSAObj}{an object of class \code{TopSA}}
+\item{topsaObj}{an object of class \code{topsa}}
 
 \item{...}{further arguments passed to the \code{plot} function}
 
@@ -19,13 +19,12 @@ estimated values. Otherwise, print the data frame in console. Defaults to
 \code{FALSE}}
 }
 \value{
-A plot of generated with the output of \code{\link{TopSA}} . For each
-variable in the model, it creates the plot of the correponding complex, its
-symmetric reflection and its symmetric difference.
+Print the threshold used, the box area, manifold embbeding area, geometric
+correlation index and symmetric sensitivity index for and object of class
+\code{topsa}.
 }
 \description{
-Plot the Complex, symmetric reflection and symmetric diffrence for and object
-of class \code{\ĺink{TopSA}}
+Print method for objects of class \code{topsa}.
 }
 \examples{
 
@@ -38,9 +37,7 @@ sin(X[, 1]) + A * sin(X[, 2])^2 + B * X[, 3]^4 * sin(X[, 1])
 X <- matrix(runif(3*100, -pi, pi), ncol = 3)
 Y <- ishigami.fun(X)
 
-estimation <- sobolnp(Y = Y, X = X, nboot = 5)
+estimation <- topsa(Ydat = Y, Xdat = X)
 
-plot(estimation)
-
-
+print(estimation)
 }

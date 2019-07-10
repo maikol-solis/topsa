@@ -2,12 +2,15 @@
 % Please edit documentation in R/plot.R
 \name{plot}
 \alias{plot}
-\title{Plot method for objects \code{TopSA}}
+\alias{plot.topsa}
+\title{plot \code{topsa} objects}
 \usage{
-plot(TopSAObj, nvar = "all", ...)
+plot(topsaObj, nvar = "all", ...)
+
+\method{plot}{topsa}(topsaObj, nvar = "all", ...)
 }
 \arguments{
-\item{TopSAObj}{an object of class \code{TopSA}}
+\item{topsaObj}{an object of class \code{topsa}}
 
 \item{nvar}{it could be a secuence from 1 to the number of variables
 indicating which variables should be plotted. It could be the character
@@ -16,13 +19,12 @@ indicating which variables should be plotted. It could be the character
 \item{...}{further arguments passed to the \code{plot} function}
 }
 \value{
-A plot of generated with the output of \code{\link{TopSA}} . For each
-variable in the model, it creates the plot of the correponding complex, its
+A plot of generated with the output of \code{topsa}. For each
+variable in the model, it creates the plot of the correponding manifold, its
 symmetric reflection and its symmetric difference.
 }
 \description{
-Plot the Complex, symmetric reflection and symmetric diffrence for and object
-of class \code{\ĺink{TopSA}}
+Plot method for objects of class \code{topsa}.
 }
 \examples{
 
@@ -35,8 +37,7 @@ sin(X[, 1]) + A * sin(X[, 2])^2 + B * X[, 3]^4 * sin(X[, 1])
 X <- matrix(runif(3*100, -pi, pi), ncol = 3)
 Y <- ishigami.fun(X)
 
-estimation <- sobolnp(Y = Y, X = X, nboot = 5)
+estimation <- topsa(Ydat = Y, Xdat = X)
 
 plot(estimation)
-
 }
