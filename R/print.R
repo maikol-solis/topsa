@@ -1,17 +1,16 @@
-#' Plot method for objects \code{TopSA}
+#' print \code{topsa} objects
 #'
-#' Plot the Complex, symmetric reflection and symmetric diffrence for and object
-#' of class \code{\ĺink{TopSA}}
+#' Print method for objects of class \code{topsa}.
 #'
-#' @param TopSAObj an object of class \code{TopSA}
+#' @param topsaObj an object of class \code{topsa}
 #' @param only.return.table  if \code{TRUE}, returns a data frame with the
 #'   estimated values. Otherwise, print the data frame in console. Defaults to
 #'   \code{FALSE}
 #' @param ... further arguments passed to the \code{plot} function
 #'
-#' @return A plot of generated with the output of \code{\link{TopSA}} . For each
-#' variable in the model, it creates the plot of the correponding complex, its
-#' symmetric reflection and its symmetric difference.
+#' @return Print the threshold used, the box area, manifold embbeding area, geometric
+#' correlation index and symmetric sensitivity index for and object of class
+#' \code{topsa}.
 #' @export
 #'
 #' @examples
@@ -25,21 +24,18 @@
 #' X <- matrix(runif(3*100, -pi, pi), ncol = 3)
 #' Y <- ishigami.fun(X)
 #'
-#' estimation <- sobolnp(Y = Y, X = X, nboot = 5)
+#' estimation <- topsa(Ydat = Y, Xdat = X)
 #'
-#' plot(estimation)
-#'
-# @importFrom
-#'
+#' print(estimation)
 
-print <- function(TopSAObj, ...) {
-  UseMethod("print", TopSAObj)
+print <- function(topsaObj, ...) {
+  UseMethod("print", topsaObj)
 }
 
 #' @export
 #' @rdname print
-print.TopSA <- function(TopSAObj, only.return.table = FALSE, ...) {
-  sensitivity_table <- t(sapply(TopSAObj$results, function(x) {
+print.topsa <- function(topsaObj, only.return.table = FALSE, ...) {
+  sensitivity_table <- t(sapply(topsaObj$results, function(x) {
     unlist(x[c(
       "threshold",
       "Manifold.Area",
@@ -55,18 +51,18 @@ print.TopSA <- function(TopSAObj, only.return.table = FALSE, ...) {
       'Box Area' ,
       'Geometric correlation',
       'Symmetric index')
-  rownames(sensitivity_table) <- colnames(TopSAObj$Xdat)
+  rownames(sensitivity_table) <- colnames(topsaObj$Xdat)
 
-  if(only.return.table == TRUE){
+  if (only.return.table == TRUE) {
     return(sensitivity_table)
   }
 
 
-  cat("\nCall:\n", deparse(TopSAObj[['call']]), "\n", sep = "")
-  cat("\nMethod used:",deparse(TopSAObj[["call"]]$method), sep = "")
-  cat("\nNumber of variables:", ncol(TopSAObj[['Xdat']]), "\n")
-  cat("\nNumber of observations:", nrow(TopSAObj[['Ydat']]), "\n")
+  cat("\nCall:\n", deparse(topsaObj[['call']]), "\n", sep = "")
+  cat("\nMethod used:", deparse(topsaObj[["call"]]$method), sep = "")
+  cat("\nNumber of variables:", ncol(topsaObj[['Xdat']]), "\n")
+  cat("\nNumber of observations:", nrow(topsaObj[['Ydat']]), "\n")
   cat("\nFirst order indices\n")
-  print(sensitivity_table[, ])
+  print(sensitivity_table[,])
   # return(sensitivity_table)
 }
