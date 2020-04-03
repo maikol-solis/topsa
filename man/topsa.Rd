@@ -4,27 +4,27 @@
 \alias{topsa}
 \title{Topological Sensitivity Analysis}
 \usage{
-topsa(Ydat, Xdat, dimension = 3, threshold.area = 0.9,
-  threshold.radius = 0.05, knearest = 20, method = "VR")
+topsa(Ydat, Xdat, threshold.radius = rep(0.05, ncol(Xdat)),
+  method = "VR")
 }
 \arguments{
 \item{Ydat}{numeric vector of responses in a model.}
 
 \item{Xdat}{numeric matrix or data.frame of covariables.}
 
-\item{dimension}{number of homology groups to estimate. The only value
-accepted is \code{dimension = 3}, but in future release this will change.}
-
-\item{threshold.area}{percent of the triangles bigger areas to keep.}
-
 \item{threshold.radius}{percent of radius or sizes of triangles to keep.
-the homology complex. Defaults to `3`.}
-
-\item{knearest}{number of the nearest neigbors keep to built the homology
-complex}
+the homology complex. Defaults to `0.05`.}
 
 \item{method}{type of method to build the homology complex. Two choices are
 accepted: \code{delanauy} o \code{VR} (Vietoris-Rips).}
+
+\item{dimension}{number of homology groups to estimate. The only value
+accepted is \code{dimension = 3}, but in future release this will change.}
+
+\item{threshold.area}{(no used for the moment) percent of the triangles bigger areas to keep.}
+
+\item{knearest}{number of the nearest neigbors keep to built the homology
+complex}
 }
 \value{
 A list of class \code{topsa} with the following elements:
@@ -39,10 +39,10 @@ A list of class \code{topsa} with the following elements:
 \describe{
 \item{\strong{threshold}}{treshold used to limit the radius or area.}
 \item{\strong{Manifold_Area}}{geometrical area of the estimated manifold.}
-\item{\strong{Box_Area}}{geometrical area of the estimated manifold.}
-\item{\strong{Geometric_Correlation}}{geometric correlation between each
+\item{\strong{Box.Area}}{geometrical area of the estimated manifold.}
+\item{\strong{Geometric.R2}}{geometric correlation between each
 \code{x} and \code{y}.}
-\item{\strong{Symmetric_Index}}{symmetric sensitivity
+\item{\strong{Geometric.Sensitivity}}{symmetric sensitivity
 index of each estimated manifold.}
 \item{\strong{manifold_plot}}{a \code{sf}
 object with the estimated manifold.}
@@ -63,5 +63,4 @@ X <- matrix(runif(3*100, -pi, pi), ncol = 3)
 Y <- ishigami.fun(X)
 
 estimation <- topsa(Ydat = Y, Xdat = X)
-
 }
