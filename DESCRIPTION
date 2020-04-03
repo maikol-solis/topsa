@@ -12,7 +12,7 @@ Description: Estimate sensitivity indices reconstructing the embedding manifold 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true 
-Imports: ggplot2, igraph, scales, sf, sfdct, methods, furrr, future, purrr
+Imports: ggplot2, scales, sf, TDA, parallel
 RoxygenNote: 6.1.1
 Suggests: 
-    testthat
+    testthat (>= 2.1.0)
