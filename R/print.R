@@ -40,8 +40,8 @@ print.topsa <- function(topsaObj, only.return.table = FALSE, ...) {
       "threshold",
       "Manifold.Area",
       "Box.Area",
-      "Geometric.Correlation",
-      "Symmetric.Index"
+      "Geometric.R2",
+      "Geometric.Sensitivity"
     )])
   }))
 
@@ -49,8 +49,8 @@ print.topsa <- function(topsaObj, only.return.table = FALSE, ...) {
     c('Threshold',
       'Manifold Area',
       'Box Area' ,
-      'Geometric correlation',
-      'Symmetric index')
+      'Geometric R2',
+      'Geometric Sensitivity')
   rownames(sensitivity_table) <- colnames(topsaObj$Xdat)
 
   if (only.return.table == TRUE) {
