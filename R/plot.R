@@ -26,19 +26,13 @@
 #'
 #' estimation <- topsa(Ydat = Y, Xdat = X)
 #'
-#' plot(estimation)
+#' plot_topsa(estimation)
 
 
-plot <- function(topsaObj, nvar = "all", ...) {
-  UseMethod("plot", topsaObj)
-}
-
-#' @export
-#' @rdname plot
-plot.topsa <- function(topsaObj,
-                       nvar = "all",
-                       ...) {
-  if (class(topsaObj)!= "topsa"){
+plot_manifold <- function(topsaObj,
+                          nvar = "all",
+                          ...) {
+  if (class(topsaObj) != "topsa") {
     stop("This function only accepts 'topsa' class objects")
   }
 
@@ -58,67 +52,12 @@ plot.topsa <- function(topsaObj,
   manifold.all <- NULL
 
   for (k in nvar) {
-    manifold <- topsaObj$result[[k]]$manifold.plot
-
-    mp_origin_coords <- sf::st_coordinates(manifold)
-
-    manifold <-
-      manifold - c(min(mp_origin_coords[,"X"]), min(mp_origin_coords[,"Y"]))
-    mp_coordinates <- sf::st_coordinates(manifold)
-
-    bb <- sf::st_make_grid(x = manifold, n = 1)
-
-    reflection <-  matrix(c(1, 0, 0, -1), 2, 2)
-
-    #    xy_original <- extract_XY_coords(mp_union)
-
-    manifold_reflectionx <- (manifold * reflection)
-
-    # mp_coordinates_reflection <- sf::st_coordinates(mp_reflection)
-
-    manifold_reflectionx <- manifold_reflectionx +
-      c(0, 2 * mean(mp_coordinates[, "Y"]))
-    # c(0, min(mp_coordinates_reflection[, "Y"]))
-
+    manifold <- topsaObj$result[[k]]$homology$manifold_unioned
 
     boundingbox <- sf::st_make_grid(x = manifold, n = 1)
 
     datapoints <-
-      sf::st_multipoint(as.matrix(cbind(topsaObj$Xdat[, k], topsaObj$Ydat)))
-
-
-
-
-
-#
-#     reflectionx <-  matrix(c(1, 0, 0, -1), 2, 2)
-#
-#     manifold_reflectionx <-
-#       (manifold - c(min(xy_original$x), min(xy_original$y))) * reflectionx
-#
-#     xy_reflection <- extract_XY_coords(manifold_reflectionx)
-#
-#     manifold_reflectionx <-
-#       manifold_reflectionx - c(0, min(xy_reflection$y) + max(xy_reflection$y))
-#
-#
-#     manifold_reflectionx <-
-#       manifold_reflectionx + c(min(xy_original$x), min(xy_original$y))
-#
-#
-#     manifold_sym_difference <-
-#       sf::st_sym_difference(manifold, manifold_reflectionx)
-
-    manifold_intersection <-
-      sf::st_intersection(manifold, manifold_reflectionx)
-
-    manifold <-
-      manifold + c(min(mp_origin_coords[, "X"]), min(mp_origin_coords[, "Y"]))
-    manifold_reflectionx <-
-      manifold_reflectionx + c(min(mp_origin_coords[, "X"]), min(mp_origin_coords[, "Y"]))
-    manifold_intersection <-
-      manifold_intersection + c(min(mp_origin_coords[, "X"]), min(mp_origin_coords[, "Y"]))
-boundingbox <- boundingbox + c(min(mp_origin_coords[, "X"]), min(mp_origin_coords[, "Y"]))
+      sf::st_multipoint(as.matrix(cbind(topsaObj$Xr[, k], topsaObj$Yr)))
 
     object_type <- NULL
 
@@ -126,55 +65,46 @@ boundingbox <- boundingbox + c(min(mp_origin_coords[, "X"]), min(mp_origin_coord
       rbind(
         manifold.all,
         sf::st_sf(
-          variable = k,
+          variable = colnames(topsaObj$Xdat)[k],
           alpha = 1,
           object_type = "Bounding Box",
           geom = sf::st_geometry(boundingbox)
         ),
         sf::st_sf(
-          variable = k,
+          variable = colnames(topsaObj$Xdat)[k],
           alpha = 1,
-          object_type = "Original",
+          object_type = "Manifold",
           geom = sf::st_geometry(manifold)
         ),
         sf::st_sf(
-          variable = k,
-          alpha = 1,
-          object_type = "Sym. Reflection",
-          geom = sf::st_geometry(manifold_reflectionx)
-        ),
-        sf::st_sf(
-          variable = k,
-          alpha = 0,
-          object_type = "Intersection",
-          geom = sf::st_geometry(manifold_intersection)
-        ),
-        sf::st_sf(
-          variable = k,
-          alpha = 1,
+          variable = colnames(topsaObj$Xdat)[k],
+          alpha = 0.5,
           object_type = "DataPoints",
           geom = sf::st_geometry(datapoints)
         )
       )
+
   }
 
-  ggplot2::ggplot() +
-    ggplot2::geom_sf(data = manifold.all,
-                     ggplot2::aes(
-                       fill = object_type,
-                       size = object_type,
-                       color = object_type
-                     )) +
+
+  plotManifold <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
+      data = manifold.all,
+      ggplot2::aes(fill = object_type,
+                   # size = object_type,
+                   color = object_type),
+      shape = 20
+    ) +
     ggplot2::scale_fill_manual(
       name = "Estimated Areas",
       values = c(
-        "Original" = "#a6cee3",
-        "Sym. Reflection" =  "#b2df8a",
-        "Intersection" = "white",
+        "Manifold" = "#a6cee3",
+        "Sym. Reflection" =  "#1f78b4",
+        "Intersection" = "#b2df8a",
         "Bounding Box" = NA,
         "DataPoints" = NA
       ),
-      breaks = c("Original" ,
+      breaks = c("Manifold" ,
                  "Sym. Reflection",
                  "Intersection",
                  NA,
@@ -183,7 +113,7 @@ boundingbox <- boundingbox + c(min(mp_origin_coords[, "X"]), min(mp_origin_coord
     ggplot2::scale_size_manual(
       name = "",
       values = c(
-        "Original" = 1,
+        "Manifold" = 1,
         "Sym. Reflection" =  1,
         "Intersection" = 1,
         "Bounding Box" = 2,
@@ -194,15 +124,217 @@ boundingbox <- boundingbox + c(min(mp_origin_coords[, "X"]), min(mp_origin_coord
     ggplot2::scale_color_manual(
       name = "",
       values = c(
-        "Original" = "#1f78b4",
-        "Sym. Reflection" = "#33a02c",
-        "Intersection" = NA,
+        "Manifold" = "#1f78b4",
+        "Sym. Reflection" = "#a6cee3",
+        "Intersection" = "#33a02c",
         "Bounding Box" = "#e31a1c",
-        "DataPoints" = "grey50"
+        "DataPoints" = ggplot2::alpha("black",0.4)
       ),
       guide = FALSE
     ) +
-    ggplot2::facet_wrap( ~ variable) +
+    ggplot2::facet_wrap( ~ variable, ncol = 3) +
     ggplot2::coord_sf() +
-    ggplot2::theme_minimal(...)
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
+      aspect.ratio = 1,
+      # panel.spacing = ggplot2::unit(1, "lines"),
+      strip.background = ggplot2::element_rect(fill = "grey95"),
+      # strip.placement = "outside"
+    )
+
+
+  return(plotManifold)
+}
+
+#' Title
+#'
+#' @param topsaObj
+#' @param nvar
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+
+plot_sym_reflection <- function(topsaObj,
+                                nvar = "all",
+                                ...) {
+  if (class(topsaObj) != "topsa") {
+    stop("This function only accepts 'topsa' class objects")
+  }
+
+  if (is.character(nvar)) {
+    if (nvar == "all") {
+      nvar = seq(1, length(topsaObj$results))
+    } else  {
+      message("Please enter 'all' or vector of values to plot.")
+    }
+  } else if (!is.numeric(nvar)) {
+    message("Please enter 'all' or vector of values to plot.")
+  }
+
+
+
+
+  manifold.sym.reflection.all <- NULL
+
+  for (k in nvar) {
+    manifold <- topsaObj$result[[k]]$homology$manifold_unioned
+
+    manifold_reflectionx <- estimate_symmetric_reflection(manifold)
+
+    boundingbox <- sf::st_make_grid(x = manifold, n = 1)
+
+    datapoints <-
+      sf::st_multipoint(as.matrix(cbind(topsaObj$Xr[, k], topsaObj$Yr)))
+
+    manifold_intersection <-
+      sf::st_intersection(manifold, manifold_reflectionx)
+
+    object_type <- NULL
+
+    manifold.sym.reflection.all <-
+      rbind(
+        manifold.sym.reflection.all,
+        sf::st_sf(
+          variable = colnames(topsaObj$Xdat)[k],
+          alpha_var = 1,
+          object_type = "Bounding Box",
+          geom = sf::st_geometry(boundingbox)
+        ),
+        sf::st_sf(
+          variable = colnames(topsaObj$Xdat)[k],
+          alpha_var = 1,
+          object_type = "Manifold",
+          geom = sf::st_geometry(manifold)
+        ),
+        sf::st_sf(
+          variable = colnames(topsaObj$Xdat)[k],
+          alpha_var = 1,
+          object_type = "Sym. Reflection",
+          geom = sf::st_geometry(manifold_reflectionx)
+        ),
+        sf::st_sf(
+          variable = colnames(topsaObj$Xdat)[k],
+          alpha_var = 0,
+          object_type = "Intersection",
+          geom = sf::st_geometry(manifold_intersection)
+        ),
+        sf::st_sf(
+          variable = colnames(topsaObj$Xdat)[k],
+          alpha_var = 0.5,
+          object_type = "DataPoints",
+          geom = sf::st_geometry(datapoints)
+        )
+      )
+
+  }
+
+
+  plotSymmetricReflection <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
+      data = manifold.sym.reflection.all,
+      ggplot2::aes(fill = object_type,
+                   color = object_type),
+      shape = 20
+    ) +
+    ggplot2::facet_wrap( ~ variable, ncol = 3) +
+    ggplot2::scale_fill_manual(
+      name = "Estimated Areas",
+      values = c(
+        "Manifold" = "#a6cee3",
+        "Sym. Reflection" =  "#1f78b4",
+        "Intersection" = "#b2df8a",
+        "Bounding Box" = NA,
+        "DataPoints" = NA
+      ),
+      breaks = c("Manifold" ,
+                 "Sym. Reflection",
+                 "Intersection",
+                 NA,
+                 NA)
+    ) +
+    ggplot2::scale_size_manual(
+      name = "",
+      values = c(
+        "Bounding Box" = 2,
+        "Manifold" = 1,
+        "Sym. Reflection" =  1,
+        "Intersection" = 1,
+        "DataPoints" = NA
+      ),
+      guide = FALSE
+    ) +
+    ggplot2::scale_color_manual(
+      name = "",
+      values = c(
+        "Manifold" = "#1f78b4",
+        "Sym. Reflection" = "#a6cee3",
+        "Intersection" = "#33a02c",
+        "Bounding Box" = "#e31a1c",
+        "DataPoints" = ggplot2::alpha("black",0.4)
+      ),
+      guide = FALSE
+    ) +
+    # ggplot2::facet_wrap( ~ variable, ncol = 3) +
+    ggplot2::coord_sf()  +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
+      aspect.ratio = 1,
+      # panel.spacing = ggplot2::unit(1, "lines"),
+      strip.background = ggplot2::element_rect(fill = "grey95"),
+    )
+
+
+  # plotIntersection <-  ggplot2::ggplot() +
+  #   ggplot2::geom_sf(data = manifold.sym.difference.all,
+  #                    mapping = ggplot2::aes(
+  #                      fill = object_type,
+  #                      size = object_type,
+  #                      color = object_type
+  #                    )) +
+  #   ggplot2::scale_fill_manual(
+  #     name = "Estimated Areas",
+  #     values = c(
+  #       "Original" = "#a6cee3",
+  #       "Sym. Reflection" =  "#b2df8a",
+  #       "Intersection" = "orange",
+  #       "Bounding Box" = NA,
+  #       "DataPoints" = NA
+  #     ),
+  #     breaks = c("Original" ,
+  #                "Sym. Reflection",
+  #                "Intersection",
+  #                NA,
+  #                NA)
+  #   ) +
+  #   ggplot2::scale_size_manual(
+  #     name = "",
+  #     values = c(
+  #       "Original" = 1,
+  #       "Sym. Reflection" =  1,
+  #       "Intersection" = 1,
+  #       "Bounding Box" = 2,
+  #       "DataPoints" = 0.1
+  #     ),
+  #     guide = FALSE
+  #   ) +
+  #   ggplot2::scale_color_manual(
+  #     name = "",
+  #     values = c(
+  #       "Original" = "#1f78b4",
+  #       "Sym. Reflection" = "#33a02c",
+  #       "Intersection" = "darkorange",
+  #       "Bounding Box" = "#e31a1c",
+  #       "DataPoints" = "grey50"
+  #     ),
+  #     guide = FALSE
+  #   ) +
+  #   ggplot2::facet_wrap( ~ variable) +
+  #   ggplot2::coord_sf()  +
+  #   ggplot2::theme_minimal() +
+  #   ggplot2::theme(panel.spacing = ggplot2::unit(1, "lines"))
+
+  return(plotSymmetricReflection)
 }
