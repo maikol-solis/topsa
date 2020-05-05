@@ -1,13 +1,4 @@
-#' Barcode plotter
-#'
-#' @param Ydat
-#' @param Xdat
-#' @param maxscale
-#'
-#' @return
-#' @export
-#'
-#' @examples
+
 
 
 barcode_plotter <- function(Ydat,
@@ -29,7 +20,7 @@ barcode_plotter <- function(Ydat,
 
 
   p <-
-    parallel::mclapply(
+    try(parallel::mclapply(
       X = seq_len(ncol(Xdat)),
       FUN = function(i) {
         d <- TDA::ripsDiag(
@@ -69,7 +60,52 @@ barcode_plotter <- function(Ydat,
         )
       },
       mc.cores = parallel::detectCores(logical = FALSE)
+    ),silent = T)
+
+  if(is(p,'try-error')){
+    p <- lapply(X = seq_len(ncol(Xdat)),
+      FUN = function(i) {
+        d <- TDA::ripsDiag(
+          cbind(Yr, Xr[, i]),
+          maxdimension = 1,
+          maxscale = maxscale[i],
+          library = "GUDHI",
+          printProgress = FALSE
+        )
+
+
+        d$diagram <- d$diagram[-1,]
+
+        ord <-
+          order(d$diagram[, "Death"] - d$diagram[, "Birth"], decreasing = TRUE)
+
+        dim1 <- d$diagram[ord, "dimension"] == 1
+        d$diagram[head(ord[dim1]), "dimension"] <- -1
+
+        dim1 <- d$diagram[, "dimension"] == 1
+        dim0 <- d$diagram[, "dimension"] == 0
+
+        list(
+          df_diagram = data.frame(
+            variable = names(Xr)[i],
+            d$diagram,
+            height = 1:nrow(d$diagram)
+          ),
+          df_labels = data.frame(
+            variable = names(Xr)[i],
+            max_death0 = max(d$diagram[dim0, "Death"]),
+            max_death1 = max(d$diagram[dim1 |
+                                         d$diagram[, "dimension"] == -1, "Death"]),
+            median_death1 = median(d$diagram[dim1, "Death"]),
+            mean_height = mean(1:nrow(d$diagram))
+          )
+        )
+      }
     )
+  }
+
+
+
 
   df_diagram <- lapply(p, function(x)
     x$df_diagram)
