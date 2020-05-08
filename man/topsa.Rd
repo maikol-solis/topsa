@@ -4,8 +4,7 @@
 \alias{topsa}
 \title{Topological Sensitivity Analysis}
 \usage{
-topsa(Ydat, Xdat, threshold.radius = rep(0.05, ncol(Xdat)),
-  method = "VR")
+topsa(Ydat, Xdat, threshold.radius = rep(0.05, ncol(Xdat)), method = "Alpha")
 }
 \arguments{
 \item{Ydat}{numeric vector of responses in a model.}
@@ -58,9 +57,7 @@ A <- 7
 B <- 0.1
 sin(X[, 1]) + A * sin(X[, 2])^2 + B * X[, 3]^4 * sin(X[, 1])
 }
-
 X <- matrix(runif(3*100, -pi, pi), ncol = 3)
 Y <- ishigami.fun(X)
-
-estimation <- topsa(Ydat = Y, Xdat = X)
+estimation <- topsa(Ydat = Y, Xdat = X,method = "Alpha")
 }
