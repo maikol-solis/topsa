@@ -26,7 +26,7 @@
 #'
 #' estimation <- topsa(Ydat = Y, Xdat = X)
 #'
-#' plot_topsa(estimation)
+#' plot_manifold(estimation)
 
 
 plot_manifold <- function(topsaObj,

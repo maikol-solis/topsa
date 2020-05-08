@@ -9,6 +9,9 @@ plot_sym_reflection(topsaObj, nvar = "all", ...)
 \arguments{
 \item{...}{}
 }
+\value{
+
+}
 \description{
 Title
 }

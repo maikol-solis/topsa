@@ -36,5 +36,5 @@ Y <- ishigami.fun(X)
 
 estimation <- topsa(Ydat = Y, Xdat = X)
 
-plot_topsa(estimation)
+plot_manifold(estimation)
 }

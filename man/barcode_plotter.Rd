@@ -9,6 +9,9 @@ barcode_plotter(Ydat, Xdat, maxscale = rep(0.05, ncol(Xdat)))
 \arguments{
 \item{maxscale}{}
 }
+\value{
+
+}
 \description{
 Barcode plotter
 }
