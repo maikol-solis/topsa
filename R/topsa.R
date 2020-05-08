@@ -44,7 +44,7 @@
 #' X <- matrix(runif(3*100, -pi, pi), ncol = 3)
 #' Y <- ishigami.fun(X)
 #'estimation <- topsa(Ydat = Y, Xdat = X,method = "Alpha")
-
+#' @importFrom methods is
 
 
 topsa <-

@@ -28,7 +28,6 @@
 #'
 #' plot_manifold(estimation)
 
-
 plot_manifold <- function(topsaObj,
                           nvar = "all",
                           ...) {

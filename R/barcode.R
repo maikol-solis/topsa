@@ -8,7 +8,9 @@
 #' @export
 #'
 #' @examples
-
+#' @importFrom stats median quantile
+#' @importFrom utils head
+#' @importFrom methods is
 
 barcode_plotter <- function(Ydat,
                             Xdat,
