@@ -1,4 +1,13 @@
-
+#' Barcode plotter
+#'
+#' @param Ydat
+#' @param Xdat
+#' @param maxscale
+#'
+#' @return
+#' @export
+#'
+#' @examples
 
 
 barcode_plotter <- function(Ydat,
