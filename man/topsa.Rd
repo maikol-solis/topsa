@@ -12,18 +12,11 @@ topsa(Ydat, Xdat, threshold.radius = rep(0.05, ncol(Xdat)), method = "Alpha")
 \item{Xdat}{numeric matrix or data.frame of covariables.}
 
 \item{threshold.radius}{percent of radius or sizes of triangles to keep.
-the homology complex. Defaults to `0.05`.}
+the homology complex. Defaults to `0.05`.
+complex}
 
 \item{method}{type of method to build the homology complex. Two choices are
-accepted: \code{delanauy} o \code{VR} (Vietoris-Rips).}
-
-\item{dimension}{number of homology groups to estimate. The only value
-accepted is \code{dimension = 3}, but in future release this will change.}
-
-\item{threshold.area}{(no used for the moment) percent of the triangles bigger areas to keep.}
-
-\item{knearest}{number of the nearest neigbors keep to built the homology
-complex}
+accepted: \code{Alpha} o \code{VR} (Vietoris-Rips).}
 }
 \value{
 A list of class \code{topsa} with the following elements:

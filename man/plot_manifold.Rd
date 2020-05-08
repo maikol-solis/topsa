@@ -9,7 +9,7 @@ plot_manifold(topsaObj, nvar = "all", ...)
 \arguments{
 \item{topsaObj}{an object of class \code{topsa}}
 
-\item{nvar}{it could be a secuence from 1 to the number of variables
+\item{nvar}{it could be a sequence from 1 to the number of variables
 indicating which variables should be plotted. It could be the character
 'all' for plot all the variables.}
 

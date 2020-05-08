@@ -1,15 +1,14 @@
 #' Topological Sensitivity Analysis
 #' @param Ydat numeric vector of responses in a model.
 #' @param Xdat numeric matrix or data.frame of covariables.
-#' @param dimension number of homology groups to estimate. The only value
-#'   accepted is \code{dimension = 3}, but in future release this will change.
-#' @param threshold.area (no used for the moment) percent of the triangles bigger areas to keep.
+# @param dimension number of homology groups to estimate. The only value accepted is \code{dimension = 3}, but in future release this will change.
+#  @param threshold.area (no used for the moment) percent of the triangles bigger areas to keep.
 #' @param threshold.radius percent of radius or sizes of triangles to keep.
 #'   the homology complex. Defaults to `0.05`.
-#' @param knearest number of the nearest neigbors keep to built the homology
+# @param knearest number of the nearest neigbors keep to built the homology
 #'   complex
 #' @param method type of method to build the homology complex. Two choices are
-#'   accepted: \code{delanauy} o \code{VR} (Vietoris-Rips).
+#'   accepted: \code{Alpha} o \code{VR} (Vietoris-Rips).
 #'
 #' @return A list of class \code{topsa} with the following elements:
 #'

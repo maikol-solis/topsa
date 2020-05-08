@@ -3,7 +3,7 @@
 #' Plot method for objects of class \code{topsa}.
 #'
 #' @param topsaObj an object of class \code{topsa}
-#' @param nvar  it could be a secuence from 1 to the number of variables
+#' @param nvar  it could be a sequence from 1 to the number of variables
 #'   indicating which variables should be plotted. It could be the character
 #'   'all' for plot all the variables.
 #' @param ... further arguments passed to the \code{plot} function
@@ -144,17 +144,6 @@ plot_manifold <- function(topsaObj,
 
   return(plotManifold)
 }
-
-#' Title
-#'
-#' @param topsaObj
-#' @param nvar
-#' @param ...
-#'
-#' @return
-#' @export
-#'
-#' @examples
 
 plot_sym_reflection <- function(topsaObj,
                                 nvar = "all",

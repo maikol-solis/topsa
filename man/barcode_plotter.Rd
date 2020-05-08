@@ -7,11 +7,27 @@
 barcode_plotter(Ydat, Xdat, maxscale = rep(0.05, ncol(Xdat)))
 }
 \arguments{
-\item{maxscale}{}
+\item{Ydat}{A vector with the model's dependent variable.}
+
+\item{Xdat}{A matrix with the model's input variables.}
+
+\item{maxscale}{Maximum radius allowed to find the barcode.}
 }
 \value{
-
+A plot with the barcode for each variable.
 }
 \description{
 Barcode plotter
+}
+\examples{
+ishigami.fun <- function(X) {
+A <- 7
+B <- 0.1
+sin(X[, 1]) + A * sin(X[, 2])^2 + B * X[, 3]^4 * sin(X[, 1])
+}
+X <- matrix(runif(3*100, -pi, pi), ncol = 3)
+Y <- ishigami.fun(X)
+
+barcode_plotter(Ydat = Y, Xdat = X, maxscale = 0.2)
+
 }

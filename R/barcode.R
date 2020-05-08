@@ -1,13 +1,24 @@
 #' Barcode plotter
 #'
-#' @param Ydat
-#' @param Xdat
-#' @param maxscale
+#' @param Ydat A vector with the model's dependent variable.
+#' @param Xdat A matrix with the model's input variables.
+#' @param maxscale Maximum radius allowed to find the barcode.
 #'
-#' @return
+#' @return A plot with the barcode for each variable.
 #' @export
 #'
 #' @examples
+#'ishigami.fun <- function(X) {
+#' A <- 7
+#' B <- 0.1
+#' sin(X[, 1]) + A * sin(X[, 2])^2 + B * X[, 3]^4 * sin(X[, 1])
+#' }
+
+#' X <- matrix(runif(3*100, -pi, pi), ncol = 3)
+#' Y <- ishigami.fun(X)
+#'
+#'barcode_plotter(Ydat = Y, Xdat = X, maxscale = 0.2)
+#'
 #' @importFrom stats median quantile
 #' @importFrom utils head
 #' @importFrom methods is
