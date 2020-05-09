@@ -3,10 +3,11 @@ Type: Package
 Title: Topological Sensitivity Analysis
 Version: 0.1.0
 Date: 2018-09-26
-Authors@R: c(person("Maikol", "Solís", email = "maikol.solis@ucr.ac.cr", role = c("aut", "cre")), person("Alberto", "Hernández", email = "albertojose.hernandez@ucr.ac.cr", role = c("ctb")), person("Ronald A.", "Zuñiga-Rojas", email = "ronald.zunigarojas@ucr.ac.cr", role = c("ctb")))
+Authors@R: c(person("Maikol", "Solís", email = "maikol.solis@ucr.ac.cr", role = c("aut", "cre")), person("Alberto", "Hernández", email = "albertojose.hernandez@ucr.ac.cr", role = c("ctb")), person("Ronald A.", "Zuñiga-Rojas", email = "ronald.zunigarojas@ucr.ac.cr", role = c("ctb")) ,person("Carlos", "Pasquier", email = "carlos.pasquier@ucr.ac.cr", role = c("ctb")))
 Author: Maikol Solís [aut, cre]
         Alberto Hernandez [ctb]
         Ronald A. Zuñiga-Rojas [ctb]
+        Carlos Pasquier [ctb]
 Maintainer: Maikol Solís <maikol.solis@ucr.ac.cr>
 Description: Estimate sensitivity indices reconstructing the embedding manifold of the data. The reconstruction is done via a Vietoris Rips with a fixed radius. With the homology of order 2 we estimate symmetric reflections of the those manifold to determine a sensivity index on of the input model. 
 License: MIT + file LICENSE
