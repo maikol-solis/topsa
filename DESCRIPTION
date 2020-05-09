@@ -2,8 +2,24 @@ Package: topsa
 Type: Package
 Title: Topological Sensitivity Analysis
 Version: 0.1.0
-Date: 2018-09-26
-Authors@R: c(person("Maikol", "Solís", email = "maikol.solis@ucr.ac.cr", role = c("aut", "cre")), person("Alberto", "Hernández", email = "albertojose.hernandez@ucr.ac.cr", role = c("ctb")), person("Ronald A.", "Zuñiga-Rojas", email = "ronald.zunigarojas@ucr.ac.cr", role = c("ctb")) ,person("Carlos", "Pasquier", email = "carlos.pasquier@ucr.ac.cr", role = c("ctb")))
+Authors@R: c(
+          person(given = "Maikol", 
+                 family = "Solís", 
+                 email = "maikol.solis@ucr.ac.cr", 
+                 role = c("aut", "cre")), 
+          person(given = "Alberto", 
+                 family = "Hernández", 
+                 email = "albertojose.hernandez@ucr.ac.cr", 
+                 role = c("ctb")), 
+          person(given = "Ronald A.", 
+                 family = "Zuñiga-Rojas", 
+                 email = "ronald.zunigarojas@ucr.ac.cr", 
+                 role = c("ctb")),
+          person(given = "Carlos", 
+                 family = "Pasquier", 
+                 email = "carlos.pasquier@ucr.ac.cr", 
+                 role = c("ctb"))
+          )
 Author: Maikol Solís [aut, cre]
         Alberto Hernandez [ctb]
         Ronald A. Zuñiga-Rojas [ctb]
