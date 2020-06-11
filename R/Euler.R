@@ -13,28 +13,45 @@
 
 #Funcion para seccionar los datos por angulo ----
 #
-Seccion_angulos <- function(Yr,Xr,steps=pi/6){ # Reciben vector Y, X_i y el paso
-      X_i <- Xr - mean(Xr)
-      Y_i <- Yr - mean(Yr)
-      angulos <- atan2(Y_i,X_i)
-      angulos <- ifelse(angulos>=0,angulos,angulos + 2*pi)
-      cita <- seq(0, 2*pi - steps, by=steps)
-      angulos_data <- list(NULL)
-      for (l in 1:length(cita)) {
-        if(cita[l]<=pi){
-          angulos_data[[l]] <- cbind(X_i[which(angulos>cita[l] & angulos<cita[l]+pi)],Y_i[which(angulos>cita[l] & angulos<cita[l]+pi)])
-        }else{
-          angulos_data[[l]] <- cbind(X_i[which(angulos>=cita[l] | angulos<=-pi+cita[l])],Y_i[which(angulos>=cita[l] | angulos<=-pi+cita[l])])
-        }
+Seccion_angulos <-
+  function(Yr, Xr, steps = pi / 6) {
+    # Reciben vector Y, X_i y el paso
+    X_i <- Xr - mean(Xr)
+    Y_i <- Yr - mean(Yr)
+    angulos <- atan2(Y_i, X_i)
 
+
+    angulos_data <- list(NULL)
+    angulos <- ifelse(angulos >= 0, angulos, angulos + 2 * pi)
+    cita <- seq(0, 2 * pi - steps, by = steps)
+    for (l in 1:length(cita)) {
+      if (cita[l] <= pi) {
+        angulos_data[[l]] <-
+          cbind(x = X_i[which(angulos > cita[l] &
+                                angulos < cita[l] + pi)],
+                y = Y_i[which(angulos > cita[l] &
+                                angulos < cita[l] + pi)],
+                angle = cita[l])
+      } else{
+        angulos_data[[l]] <-
+          cbind(x = X_i[which(angulos >= cita[l] |
+                                angulos <= -pi + cita[l])],
+                y = Y_i[which(angulos >= cita[l] |
+                                angulos <= -pi + cita[l])],
+                angle = cita[l])
 
       }
-      names(angulos_data) <- paste("cita",0:(length(cita)-1),sep = "")
-      angulos_data
-}
 
-pru <- Seccion_angulos(Y,X[,1],pi/2)
-ggplot()+geom_point(aes(X[,1] - mean(X[,1]),Y-mean(Y)),shape=2)+ geom_point(aes(pru[[1]][,1],pru[[1]][,2]))
+    }
+    names(angulos_data) <- cita
+
+      # paste("cita", 0:(length(cita) - 1), sep = "")
+
+    angulos_data
+  }
+
+pru <- Seccion_angulos(Y, X[, 1], pi / 2)
+ggplot() + geom_point(aes(X[, 1] - mean(X[, 1]), Y - mean(Y)), shape = 2) + geom_point(aes(pru[[3]][, 1], pru[[3]][, 2]))
 
 
 ##### Característica de Euler ----
@@ -62,11 +79,11 @@ caracteristica <- function(Ydat,
 
     d$diagram <- d$diagram[-1,]
 
-    ord <-
-      order(d$diagram[, "Death"] - d$diagram[, "Birth"], decreasing = TRUE)
-
-    dim1 <- d$diagram[ord, "dimension"] == 1
-    d$diagram[head(ord[dim1]), "dimension"] <- -1
+    # ord <-
+    #   order(d$diagram[, "Death"] - d$diagram[, "Birth"], decreasing = TRUE)
+    #
+    # dim1 <- d$diagram[ord, "dimension"] == 1
+    # d$diagram[head(ord[dim1]), "dimension"] <- -1
 d$diagram
 }
 #caracteristica(Y,X[,1],0.2)
@@ -75,7 +92,7 @@ d$diagram
 #Esta función recibe la columna  Y, X_i
 X_carac <- function(Y,X,maxscale) {
   Carac <- as.data.frame(caracteristica(Ydat = Y, Xdat = X, maxscale))
-  Carac <- Carac[Carac$dimension!=-1,]
+  #Carac <- Carac[Carac$dimension!=-1,]
   H0 <- Carac[Carac$dimension==0,]
   H1 <- Carac[Carac$dimension==1,]
   radios <- sort(unique(c(Carac$Birth,Carac$Death)))
@@ -113,20 +130,31 @@ Xcars <- function(Ydat,Xdat,maxscale=0.2,steps=pi/6) {
                FUN = function(j){
     lapply(X = seq_len(length(pru[[1]])),
               FUN = function(i) {
-                X_carac(pru[[j]][[i]][,2],pru[[j]][[i]][,1],maxscale)})
+                df <-
+                  X_carac(pru[[j]][[i]][, "y"], pru[[j]][[i]][, "x"], maxscale)})
+                 cbind(df, pru[[j]][[i]][, "angle"])
                })
   lg#Lista grande
 
 }
 
-E_car <- Xcars(Ydat,Xdat)#Cada numero de sublista representa un angulo y cada lista X_i
+E_car <- Xcars(Ydat,Xdat, steps = pi/20)#Cada numero de sublista representa un angulo y cada lista X_i
 # Gráficos----
-ggplot(dplyr::bind_rows(E_car[[1]], .id="angulo"), aes(radios, Xcar, colour=angulo)) +
-  geom_line()
-ggplot(dplyr::bind_rows(E_car[[2]], .id="angulo"), aes(radios, Xcar, colour=angulo)) +
-  geom_line()
-ggplot(dplyr::bind_rows(E_car[[3]], .id="angulo"), aes(radios, Xcar, colour=angulo)) +
-  geom_line()
+ggplot(dplyr::bind_rows(E_car[[1]], .id = "angulo"),
+       aes(radios, Xcar, colour = angulo)) +
+  geom_line() +
+  xlim(c(0,0.003))
+
+ggplot(dplyr::bind_rows(E_car[[2]], .id = "angulo"),
+       aes(radios, Xcar, colour = angulo)) +
+  geom_line() +
+  xlim(c(0,0.01))
+
+ggplot(dplyr::bind_rows(E_car[[3]], .id = "angulo"),
+       aes(radios, Xcar, colour = angulo)) +
+  geom_line() +
+  xlim(c(0,0.005))
+
 
 
 
