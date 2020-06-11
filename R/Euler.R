@@ -121,38 +121,74 @@ Xcars <- function(Ydat,Xdat,maxscale=0.2,steps=pi/6) {
   lg <- list()
 
 
-  pru <- lapply(X = seq_len(ncol(Xdat)),
+  pru <- lapply(
+    X = seq_len(ncol(Xdat)),
+    FUN = function(i) {
+      Seccion_angulos(Y, X[, i], steps)
+    }
+  )#Data por angulos
+
+
+  lg <- lapply(
+    X = seq_len(ncol(Xdat)),
+    FUN = function(j) {
+      lapply(
+        X = seq_len(length(pru[[1]])),
         FUN = function(i) {
-         Seccion_angulos(Y,X[,i],steps)})#Data por angulos
+          df <-
+            X_carac(pru[[j]][[i]][, "y"], pru[[j]][[i]][, "x"], maxscale)
+          cbind(df, angle = pru[[j]][[i]][1, "angle"])
+            }
+      )
 
-
-  lg <- lapply(X = seq_len(ncol(Xdat)),
-               FUN = function(j){
-    lapply(X = seq_len(length(pru[[1]])),
-              FUN = function(i) {
-                df <-
-                  X_carac(pru[[j]][[i]][, "y"], pru[[j]][[i]][, "x"], maxscale)})
-                 cbind(df, pru[[j]][[i]][, "angle"])
-               })
+    }
+  )
   lg#Lista grande
 
 }
 
-E_car <- Xcars(Ydat,Xdat, steps = pi/20)#Cada numero de sublista representa un angulo y cada lista X_i
+E_car <- Xcars(Ydat,Xdat, steps = pi/4)#Cada numero de sublista representa un angulo y cada lista X_i
 # Gráficos----
-ggplot(dplyr::bind_rows(E_car[[1]], .id = "angulo"),
-       aes(radios, Xcar, colour = angulo)) +
-  geom_line() +
-  xlim(c(0,0.003))
 
-ggplot(dplyr::bind_rows(E_car[[2]], .id = "angulo"),
+df1 <-
+  bind_cols(bind_rows(E_car[[2]], .id = "angulo"), side = "upper")
+df2 <-
+  bind_cols(bind_rows(rev(E_car[[2]]), .id = "angulo"), side = "lower")
+
+df <- bind_rows(df1, df2)
+
+df <-  df %>%
+  mutate(angulo = fct_reorder(angulo, as.numeric(angulo)))
+
+
+ggplot(df,
+       aes(radios, Xcar, colour = side)) +
+  geom_line(size = 2) +
+  # scale_color_viridis_d() +
+  facet_wrap(. ~ angulo) +
+  xlim(c(0, 0.003)) +
+  theme_minimal()
+
+df <- dplyr::bind_rows(E_car[[2]], .id = "angulo")
+
+df <-  df %>%
+  mutate(angulo = fct_reorder(angulo, as.numeric(angulo)))
+
+ggplot(df,
        aes(radios, Xcar, colour = angulo)) +
   geom_line() +
+  scale_color_viridis_d()+
   xlim(c(0,0.01))
 
-ggplot(dplyr::bind_rows(E_car[[3]], .id = "angulo"),
-       aes(radios, Xcar, colour = angulo)) +
+df <- dplyr::bind_rows(E_car[[3]], .id = "angulo")
+
+df <-  df %>%
+  mutate(angulo = fct_reorder(angulo, as.numeric(angulo)))
+
+ggplot(df,
+       aes(radios, Xcar, colour = angulo )) +
   geom_line() +
+  scale_color_viridis_d()+
   xlim(c(0,0.005))
 
 
