@@ -20,8 +20,7 @@ Authors@R: c(
                  email = "carlos.pasquier@ucr.ac.cr", 
                  role = c("ctb"))
           )
-Maintainer: Maikol Solís <maikol.solis@ucr.ac.cr>
-Description: Estimate sensitivity indices reconstructing the embedding manifold of the data. The reconstruction is done via a Vietoris Rips with a fixed radius. With the homology of order 2 we estimate symmetric reflections of the those manifold to determine a sensivity index on of the input model. 
+Description: Estimate sensitivity indices reconstructing the embedding manifold of the data. The reconstruction is done via a Vietoris Rips with a fixed radius. With the homology of order 2 we estimate symmetric reflections of the those manifold to determine a sensitivity index on of the input model. 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true 

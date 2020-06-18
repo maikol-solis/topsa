@@ -151,9 +151,10 @@ E_car <- Xcars(Ydat,Xdat, steps = pi/4)#Cada numero de sublista representa un an
 # Gráficos----
 
 df1 <-
-  bind_cols(bind_rows(E_car[[2]], .id = "angulo"), side = "upper")
+  bind_cols(bind_rows(E_car[[3]], .id = "angulo"), side = "upper")
+
 df2 <-
-  bind_cols(bind_rows(rev(E_car[[2]]), .id = "angulo"), side = "lower")
+  bind_cols(bind_rows(rev(E_car[[3]]), .id = "angulo"), side = "lower")
 
 df <- bind_rows(df1, df2)
 
@@ -169,7 +170,7 @@ ggplot(df,
   xlim(c(0, 0.003)) +
   theme_minimal()
 
-df <- dplyr::bind_rows(E_car[[2]], .id = "angulo")
+df <- dplyr::bind_rows(E_car[[1]], .id = "angulo")
 
 df <-  df %>%
   mutate(angulo = fct_reorder(angulo, as.numeric(angulo)))
@@ -186,9 +187,9 @@ df <-  df %>%
   mutate(angulo = fct_reorder(angulo, as.numeric(angulo)))
 
 ggplot(df,
-       aes(radios, Xcar, colour = angulo )) +
-  geom_line() +
-  scale_color_viridis_d()+
+       aes(radios, Xcar, colour = angle )) +
+  geom_point() +
+  scale_color_viridis_c()+
   xlim(c(0,0.005))
 
 
