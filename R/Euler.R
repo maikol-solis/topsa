@@ -92,29 +92,37 @@ caracteristica <- function(Ydat,
 
 #Esta función recibe la columna  Y, X_i
 X_carac <- function(Y,X,maxscale) {
-  Carac <- as.data.frame(caracteristica(Ydat = Y, Xdat = X, maxscale))
+  Carac <- suppressWarnings(as.data.frame(caracteristica(Ydat = Y, Xdat = X, maxscale)))
   #Carac <- Carac[Carac$dimension!=-1,]
   H0 <- Carac[Carac$dimension==0,]
   H1 <- Carac[Carac$dimension==1,]
   radios <- sort(unique(c(Carac$Birth,Carac$Death)))
-  b0 <- c()
-  b1 <- c()
-  for (k in 1:length(radios)) {
-    b0[k] <- nrow(H0[H0$Death > radios[k],])
-    b1[k] <- nrow(H1[H1$Birth<=radios[k] & H1$Death>radios[k],])
+  if(length(radios)==0){
+    return()
+  }else{
+
+    b0 <- c()
+    b1 <- c()
+    for (k in 1:length(radios)) {
+      b0[k] <- nrow(H0[H0$Death > radios[k],])
+      b1[k] <- nrow(H1[H1$Birth<=radios[k] & H1$Death>radios[k],])
+
+    }
+    Xcar <- b0-b1
+    data.frame(radios,Xcar)
 
   }
-  Xcar <- b0-b1
-  data.frame(radios,Xcar)
+
 }
-pru[[1]][[1]][,"y"]
-X_carac(pru[[1]][[8]][,"y"],pru[[1]][[8]][,"x"],0.2)
+
+#pru[[1]][[1]][,"y"]
+#X_carac(pru[[1]][[8]][,"y"],pru[[1]][[8]][,"x"],0.2)
 #barcode_plotter(Y,X,0.2)
 #(El barcode se hace con rips lo hace con Rips)
 
 
 
-# Función de la caracteristica de Euler(todos los datos)-----
+# Función de la caracteristica de Euler por angulos(todos los datos)-----
 
 # Xdat<-Matriz de todos los datos X
 
@@ -142,7 +150,7 @@ Xcars <- function(Ydat,Xdat,maxscale=0.2,steps=pi/6) {
 
   pru <- lapply(
     X = seq_len(ncol(Xdat)),
-    FUN = function(i) {
+    function(i) {
       Seccion_angulos(Y, X[, i], steps)
     }
   )#Data por angulos
@@ -150,10 +158,10 @@ Xcars <- function(Ydat,Xdat,maxscale=0.2,steps=pi/6) {
 
   lg <- lapply(
     X = seq_len(ncol(Xdat)),
-    FUN = function(j) {
+    function(j) {
       lapply(
         X = seq_len(length(pru[[1]])),
-        FUN = function(i) {
+        function(i) {
           df <-
             X_carac(pru[[j]][[i]][, "y"], pru[[j]][[i]][, "x"], maxscale)
           cbind(df, angle = pru[[j]][[i]][1, "angle"]) %>%mutate(angle_numeric=cita[i])%>%  mutate(angle=cita_caracter[i]) %>% mutate(side=ifelse(angle%in%upper,"upper","lower")) %>% mutate(Etiqueta=Etiquetas[i])
@@ -173,10 +181,10 @@ Xcars <- function(Ydat,Xdat,maxscale=0.2,steps=pi/6) {
 
 
 
-E_car <- Xcars(Ydat,Xdat, steps = pi/6)#Cada numero de sublista representa un angulo y cada lista X_i
+E_car <- Xcars(Ydat,Xdat, steps = pi/2)#Cada numero de sublista representa un angulo y cada lista X_i
 
-# Gráficos----
-df <- bind_rows(E_car)
+# Gráficos por angulos----
+df <- bind_rows(E_car[[1]])
 #
 # df1 <-
 #   bind_cols(bind_rows(E_car[[3]], .id = "angulo"), side = "upper")
@@ -191,7 +199,7 @@ df <- bind_rows(E_car)
 # df$angulo
 # unique(df$angle)
 #
- ggplot(df,
+ggplot(df,
         aes(radios, Xcar, colour = side)) +
    geom_line(size = 2) +
    #scale_color_viridis_d() +
@@ -222,54 +230,73 @@ ggplot(df,
   scale_color_viridis_c()+
   xlim(c(0,0.005))
 
-############
 
-# #Funcion para seccionar los datos por niveles ----
-# #
-# Seccion_niveles <- function(Yr,Xr,steps=10){
-#   X_i <- Xr - mean(Xr)
-#   Y_i <- Yr - mean(Yr)
-#   Medida <- abs(max(Y_i) -min(Y_i))/steps
-#   niveles <- seq(min(Y_i),max(Y_i),by=Medida)
-#   niveles_data <- list(NULL)
-#   niveles_data <- lapply(X=1:length(niveles),function(k){cbind(x=X_i[which(Y_i>=niveles[k])],y=Y_i[which(Y_i>=niveles[k])],nivel=niveles[k])})
-#   niveles_data
-# }
+
+#Funcion para seccionar los datos por niveles ----
 #
-# #pru <- Seccion_niveles(Y,X[,1],10)
-# # library(ggplot2)
-# # ggplot()+geom_point(aes(X[,1] - mean(X[,1]),Y-mean(Y)),shape=2)+ geom_point(aes(pru[[2]][,1],pru[[2]][,2]))
-#
-#
-#
-# # Función de la característica de Euler con niveles----
-#
-# Xcars_niveles <- function(Ydat,Xdat,maxscale=0.2,steps=10) {
-#   pru <- lapply(
-#     X = seq_len(ncol(Xdat)),
-#     FUN = function(i) {
-#       Seccion_niveles(Y, X[,i], steps)
-#     }
-#   )#Data por angulos
-#
-#   lg <- lapply(
-#     X = seq_len(ncol(Xdat)),
-#     FUN = function(j) {
-#       lapply(
-#         X = seq_len(length(pru[[1]])),
-#         FUN = function(i) {
-#             X_carac(pru[[j]][[i]][, "y"], pru[[j]][[i]][, "x"], maxscale)
-#
-#         }
-#       )
-#
-#     }
-#   )
-#   # for (k in 1:ncol(Xdat)) {
-#   #   names(lg[[k]]) <- cita_caracter
-#   # }
-#   lg#Lista grande
-#
-# }
-#
-# E_carniveles <- Xcars_niveles(Ydat,Xdat, steps =10)
+Seccion_niveles <- function(Yr,Xr,steps=10){
+  X_i <- Xr - mean(Xr)
+  Y_i <- Yr - mean(Yr)
+  Medida <- abs(max(Y_i) -min(Y_i))/steps
+  niveles <- seq(min(Y_i),max(Y_i),by=Medida)
+  niveles_data <- list(NULL)
+  niveles_data <- lapply(X=1:length(niveles),function(k){cbind(x=X_i[which(Y_i>=niveles[k])],y=Y_i[which(Y_i>=niveles[k])],nivel=niveles[k])})
+  niveles_data
+}
+
+# pru <- Seccion_niveles(Y,X[,1],11)
+# library(ggplot2)
+# ggplot()+geom_point(aes(X[,1] - mean(X[,1]),Y-mean(Y)),shape=2)+ geom_point(aes(pru[[2]][,1],pru[[2]][,2]))
+
+
+
+# Función de la característica de Euler por niveles----
+
+Xcars_niveles <- function(Ydat,Xdat,maxscale=0.2,steps=3) {
+  pru <- lapply(
+    X = seq_len(ncol(Xdat)),
+    function(i) {
+      Seccion_niveles(Y, X[,i], steps)
+    }
+  )#Data por angulos
+
+  lg <- lapply(
+    X = seq_len(ncol(Xdat)),
+    function(j) {
+      lapply(
+        X = seq_len(length(pru[[1]])),
+        function(i) {
+            df <- X_carac(pru[[j]][[i]][, "y"], pru[[j]][[i]][, "x"], maxscale)
+            suppressWarnings(cbind(df,nivel=pru[[j]][[i]][1,"nivel"]))
+
+        }
+      )
+
+    }
+  )
+
+  lg <- lapply(X = seq_len(ncol(Xdat)),function(i){lg[[i]][lengths(lg[[i]])>1]})
+  #Elimina las sublistas nulas producto de pocos datos(una o dos filas)
+  lg#Lista grande
+
+}
+
+E_carniveles <- Xcars_niveles(Ydat,Xdat[,1], steps =3)
+#### Graficos niveles----
+
+
+df <- bind_rows(E_carniveles[[3]])
+ggplot(df,
+       aes(radios, Xcar, colour = nivel)) +
+  geom_line() +
+  #scale_color_viridis_d()+
+  xlim(c(0,0.01))
+
+df$nivel <- as.factor(round(df$nivel,3))
+ggplot(df,
+       aes(radios, Xcar, colour = nivel)) +
+  geom_line() +
+  #scale_color_viridis_d()+
+  xlim(c(0,0.01))
+
+
