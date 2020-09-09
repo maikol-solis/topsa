@@ -29,7 +29,7 @@ A list of class \code{topsa} with the following elements:
 \item{\strong{threshold}}{cutoff level for the radius or area.}
 \item{\strong{results}}{A list for each variable with:
 \describe{
-\item{\strong{threshold}}{treshold used to limit the radius or area.}
+\item{\strong{threshold}}{threshold used to limit the radius or area.}
 \item{\strong{Manifold_Area}}{geometrical area of the estimated manifold.}
 \item{\strong{Box.Area}}{geometrical area of the estimated manifold.}
 \item{\strong{Geometric.R2}}{geometric correlation between each
@@ -50,7 +50,7 @@ A <- 7
 B <- 0.1
 sin(X[, 1]) + A * sin(X[, 2])^2 + B * X[, 3]^4 * sin(X[, 1])
 }
-X <- matrix(runif(3*100, -pi, pi), ncol = 3)
+X <- matrix(runif(3*50, -pi, pi), ncol = 3)
 Y <- ishigami.fun(X)
 estimation <- topsa(Ydat = Y, Xdat = X,method = "Alpha")
 }
