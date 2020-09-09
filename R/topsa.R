@@ -20,7 +20,7 @@
 #' \item{\strong{threshold}}{cutoff level for the radius or area.}
 #' \item{\strong{results}}{A list for each variable with:
 #' \describe{
-#' \item{\strong{threshold}}{treshold used to limit the radius or area.}
+#' \item{\strong{threshold}}{threshold used to limit the radius or area.}
 #' \item{\strong{Manifold_Area}}{geometrical area of the estimated manifold.}
 #' \item{\strong{Box.Area}}{geometrical area of the estimated manifold.}
 #' \item{\strong{Geometric.R2}}{geometric correlation between each

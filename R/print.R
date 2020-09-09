@@ -8,7 +8,7 @@
 #'   \code{FALSE}
 #' @param ... further arguments passed to the \code{plot} function
 #'
-#' @return Print the threshold used, the box area, manifold embbeding area, geometric
+#' @return Print the threshold used, the box area, manifold embedding area, geometric
 #' correlation index and symmetric sensitivity index for and object of class
 #' \code{topsa}.
 #' @export
