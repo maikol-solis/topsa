@@ -28,13 +28,7 @@
 #'
 #' print(estimation)
 
-print <- function(topsaObj, ...) {
-  UseMethod("print", topsaObj)
-}
-
-#' @export
-#' @rdname print
-print.topsa <- function(topsaObj, only.return.table = FALSE, ...) {
+print_topsa <- function(topsaObj, only.return.table = FALSE, ...) {
   sensitivity_table <- t(sapply(topsaObj$results, function(x) {
     unlist(x[c(
       "threshold",
