@@ -9,7 +9,7 @@
 #' @param ... further arguments passed to the \code{plot} function
 #'
 #' @return A plot of generated with the output of \code{topsa}. For each
-#' variable in the model, it creates the plot of the correponding manifold, its
+#' variable in the model, it creates the plot of the corresponding manifold, its
 #' symmetric reflection and its symmetric difference.
 #' @export
 #'
@@ -26,9 +26,9 @@
 #'
 #' estimation <- topsa(Ydat = Y, Xdat = X)
 #'
-#' plot_manifold(estimation)
+#' plot_topsa(estimation)
 
-plot_manifold <- function(topsaObj,
+plot_topsa <- function(topsaObj,
                           nvar = "all",
                           ...) {
   if (class(topsaObj) != "topsa") {
