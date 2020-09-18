@@ -21,7 +21,7 @@ Authors@R: c(
                  role = c("ctb"))
           )
 Maintainer: Maikol Solís <maikol.solis@ucr.ac.cr>
-Description: Estimate geometric sensitivity indices reconstructing the embedding manifold of the data. The reconstruction is done via a Vietoris Rips with a fixed radius. With the homology of order 2 we estimate symmetric reflections of the those manifold to determine a sensitivity index on of the input model. Detailed information of the methods can be found in (<https://www.dropbox.com/s/0kcrjhhkl7899n1/article-symmetric-reflection.pdf>) (WIP preprint) 
+Description: Estimate geometric sensitivity indices reconstructing the embedding manifold of the data. The reconstruction is done via a Vietoris Rips with a fixed radius. With the homology of order 2 we estimate symmetric reflections of the those manifold to determine a sensitivity index on of the input model. Detailed information of the methods can be found in <https://www.dropbox.com/s/0kcrjhhkl7899n1/article-symmetric-reflection.pdf> (WIP preprint). 
 License: MIT + file LICENSE
 URL: https://github.com/maikol-solis/topsa
 BugReports: https://github.com/maikol-solis/topsa/issues
