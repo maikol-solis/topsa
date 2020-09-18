@@ -12,7 +12,8 @@ Y <- data.frame(linear.fun(X))
 
 p <- barcode_plotter(Ydat = Y,
                     Xdat = X,
-                    maxscale = 0.1)
+                    maxscale = 0.1,
+                    mc.cores = 2)
 
 expect_s3_class(p, "ggplot")
 })

@@ -4,7 +4,12 @@
 \alias{barcode_plotter}
 \title{Barcode plotter}
 \usage{
-barcode_plotter(Ydat, Xdat, maxscale = rep(0.05, ncol(Xdat)))
+barcode_plotter(
+  Ydat,
+  Xdat,
+  maxscale = rep(0.05, ncol(Xdat)),
+  mc.cores = parallel::detectCores(logical = FALSE)
+)
 }
 \arguments{
 \item{Ydat}{A vector with the model's dependent variable.}
@@ -12,6 +17,8 @@ barcode_plotter(Ydat, Xdat, maxscale = rep(0.05, ncol(Xdat)))
 \item{Xdat}{A matrix with the model's input variables.}
 
 \item{maxscale}{Maximum radius allowed to find the barcode.}
+
+\item{mc.cores}{Number of cores used to estimate the barcodes in parallel. (See \code{\link{mclapply}}).}
 }
 \value{
 A plot with the barcode for each variable.
@@ -28,6 +35,6 @@ sin(X[, 1]) + A * sin(X[, 2])^2 + B * X[, 3]^4 * sin(X[, 1])
 X <- matrix(runif(3*100, -pi, pi), ncol = 3)
 Y <- ishigami.fun(X)
 
-barcode_plotter(Ydat = Y, Xdat = X, maxscale = 0.2)
+barcode_plotter(Ydat = Y, Xdat = X, maxscale = 0.2, mc.cores = 2)
 
 }
