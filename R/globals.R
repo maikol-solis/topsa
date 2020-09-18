@@ -1,0 +1,9 @@
+utils::globalVariables(c(
+  "Birth",
+  "Death",
+  "height",
+  "dimension",
+  "median_death1",
+  "max_death0",
+  "max_death1"
+))
