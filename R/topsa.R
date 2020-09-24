@@ -49,10 +49,9 @@
 topsa <-
   function(Ydat,
            Xdat,
-           #threshold.area = 0.9,
-           threshold.radius = rep(0.05,ncol(Xdat)),
-           # knearest = 20,
-           method = "Alpha") {
+           threshold.radius = rep(0.02,ncol(Xdat)),
+           method = "Alpha",
+           mc.cores = 2) {
     #Arguments:
     #Y: matrix of model outputs (only one column)
     #X: matrix model parameters
