@@ -258,32 +258,26 @@ topsa <-
     #                         ), envir=environment())
 
 
-     sensitivity_results <- try(parallel::mclapply(
-       X = 1:ncol(Xdat),
+    sensitivity_results <- try(parallel::mclapply(
+      X = 1:ncol(Xdat),
       FUN = estimate_sensitivity_index,
-       Ydat = Ydat,
-       Xdat = Xdat,
-    #   dimension = dimension,
-    #   knearest = knearest,
-       threshold = threshold.radius,
-       method = method,
-    mc.cores = parallel::detectCores(logical = FALSE)
-     ),
-     silent = T)
+      Ydat = Ydat,
+      Xdat = Xdat,
+      threshold = threshold.radius,
+      method = method,
+      mc.cores = mc.cores
+    ),
+    silent = T)
 
 
 
     if (is(sensitivity_results, 'try-error')){
       sensitivity_results <-
         lapply(
-          # cl = cl,
           X = 1:ncol(Xdat),
           FUN = estimate_sensitivity_index,
           Ydat = Ydat,
           Xdat = Xdat,
-          # dimension = dimension,
-          # knearest = knearest,
-          # threshold.area = threshold.area,
           threshold = threshold.radius,
           method = method,
         )
