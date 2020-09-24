@@ -329,8 +329,6 @@ estimate_sensitivity_index <- function(ivar,
         X <- X[idx,]
         Y<- Y[idx,]
 
-        X <- as.matrix(scales::rescale(X , to = c(0, 1)), ncol = 1)
-        Y <- as.matrix(scales::rescale(Y , to = c(0, 1)), ncol = 1)
 
         if (method == "Alpha") {
           Filtration <- TDA::alphaComplexFiltration(cbind(Y, X),printProgress = FALSE)
@@ -428,6 +426,11 @@ estimate_sensitivity_index <- function(ivar,
             threshold = threshold[ivar]
             # Number.Edges.per.Point = npositives
           )
+      XY <- scales::rescale(cbind(X, Y))
+      X <- XY[, 1]
+      Y <- XY[, 2]
+      # X <- as.matrix(scales::rescale(X , to = c(0, 1)), ncol = 1)
+      # Y <- as.matrix(scales::rescale(Y , to = c(0, 1)), ncol = 1)
         )
 
 
