@@ -85,8 +85,23 @@ topsa <-
     ANS[['call']] <- match.call()
     ANS[['Xdat']] <- Xdat
     ANS[['Ydat']] <- Ydat
-    ANS[['Xr']] <- as.data.frame(lapply(Xdat, scales::rescale))
-    ANS[['Yr']] <- as.data.frame(lapply(Ydat, scales::rescale))
+
+    Xr <- matrix()
+    Yr <- matrix()
+    l <- lapply(seq_along(Xdat), function(k) {
+      scales::rescale(cbind(Xdat[, k], Ydat[, 1]))
+    })
+
+    lx <- lapply(l, function(x)
+      x[, 1])
+
+    Xr <- as.data.frame(do.call("cbind", lx))
+    Yr <- as.data.frame(sapply(Ydat, scales::rescale))
+    ANS[['Xr']] <- Xr
+    ANS[['Yr']] <- Yr
+
+    # ANS[['Xr']] <- as.data.frame(lapply(Xdat, scales::rescale))
+    # ANS[['Yr']] <- as.data.frame(lapply(Ydat, scales::rescale))
     # ANS[['dimension']] <- dimension
 
     # message("Estimating persistance homology for each variable")
