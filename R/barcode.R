@@ -27,7 +27,7 @@
 barcode_plotter <- function(Ydat,
                             Xdat,
                             maxscale = rep(0.05, ncol(Xdat)),
-                            mc.cores = parallel::detectCores(logical = FALSE)) {
+                            mc.cores = 2) {
   if (length(maxscale) == 1) {
     maxscale <- rep(maxscale, ncol(Xdat))
   } else if (length(maxscale) < ncol(Xdat)) {
@@ -37,9 +37,17 @@ barcode_plotter <- function(Ydat,
   Xdat <- as.data.frame(Xdat)
   Ydat <- as.data.frame(Ydat)
 
-  Xr <- as.data.frame(lapply(Xdat, scales::rescale))
-  Yr <- as.data.frame(lapply(Ydat, scales::rescale))
+  # Xr <- as.data.frame(lapply(Xdat, scales::rescale))
+  # Yr <- as.data.frame(lapply(Ydat, scales::rescale))
+  l <- lapply(seq_along(Xdat), function(k) {
+    scales::rescale(cbind(Xdat[, k], Ydat[, 1]))
+  })
 
+  lx <- lapply(l, function(x)
+    x[, 1])
+
+  Xr <- as.data.frame(do.call("cbind", lx))
+  Yr <- as.data.frame(sapply(Ydat, scales::rescale))
 
 
 
