@@ -52,7 +52,8 @@ topsa <-
            #threshold.area = 0.9,
            threshold.radius = rep(0.05,ncol(Xdat)),
            # knearest = 20,
-           method = "Alpha") {
+           method = "Alpha",
+           angle = 0) {
     #Arguments:
     #Y: matrix of model outputs (only one column)
     #X: matrix model parameters
@@ -88,6 +89,7 @@ topsa <-
     ANS[['Ydat']] <- Ydat
     ANS[['Xr']] <- as.data.frame(lapply(Xdat, scales::rescale))
     ANS[['Yr']] <- as.data.frame(lapply(Ydat, scales::rescale))
+    ANS[['angle']] <- angle
     # ANS[['dimension']] <- dimension
 
     # message("Estimating persistance homology for each variable")
@@ -244,34 +246,30 @@ topsa <-
     #                         ), envir=environment())
 
 
-     sensitivity_results <- try(parallel::mclapply(
-       X = 1:ncol(Xdat),
+    sensitivity_results <- try(parallel::mclapply(
+      X = 1:ncol(Xdat),
       FUN = estimate_sensitivity_index,
-       Ydat = Ydat,
-       Xdat = Xdat,
-    #   dimension = dimension,
-    #   knearest = knearest,
-       threshold = threshold.radius,
-       method = method,
-    mc.cores = parallel::detectCores(logical = FALSE)
-     ),
-     silent = T)
+      Ydat = Ydat,
+      Xdat = Xdat,
+      threshold = threshold.radius,
+      method = method,
+      angle = angle,
+      mc.cores = parallel::detectCores(logical = FALSE)
+    ),
+    silent = T)
 
 
 
-    if (is(sensitivity_results, 'try-error')){
+    if (is(sensitivity_results, 'try-error')) {
       sensitivity_results <-
         lapply(
-          # cl = cl,
           X = 1:ncol(Xdat),
           FUN = estimate_sensitivity_index,
           Ydat = Ydat,
           Xdat = Xdat,
-          # dimension = dimension,
-          # knearest = knearest,
-          # threshold.area = threshold.area,
           threshold = threshold.radius,
           method = method,
+          angle = angle
         )
     }
 
@@ -310,10 +308,19 @@ estimate_sensitivity_index <- function(ivar,
            Ydat,
            Xdat,
            dimension,
-           # knearest,
-           threshold, method) {
-    constructHOMOLOGY <-
-      function (ivar, Ydat, Xdat, dimension, threshold,method) {
+           threshold,
+           method,
+           angle) {
+
+  constructHOMOLOGY <-
+    function (ivar,
+              Ydat,
+              Xdat,
+              dimension,
+              threshold,
+              method,
+              angle) {
+
         Y <- as.matrix(Ydat)
         X <- as.matrix(Xdat[, ivar])
 
@@ -323,6 +330,14 @@ estimate_sensitivity_index <- function(ivar,
 
         X <- as.matrix(scales::rescale(X , to = c(0, 1)), ncol = 1)
         Y <- as.matrix(scales::rescale(Y , to = c(0, 1)), ncol = 1)
+        meanX <- mean(X)
+        meanY <- mean(Y)
+        #Se centra para el calculo
+        XsYs <- data.frame(X - meanX, Y - meanY)
+        Rotated <- as.matrix(XsYs) %*% RotMat(-angle)
+        #Se descentra para el calculo
+        X <- Rotated[, 1] + meanX
+        Y <- Rotated[, 2] + meanY
 
         if (method == "Alpha") {
           Filtration <- TDA::alphaComplexFiltration(cbind(Y, X),printProgress = FALSE)
@@ -427,7 +442,7 @@ estimate_sensitivity_index <- function(ivar,
 
     Ydat <- as.matrix(Ydat)
 
-    H <- constructHOMOLOGY(ivar, Ydat, Xdat, dimension, threshold, method)
+    H <- constructHOMOLOGY(ivar, Ydat, Xdat, dimension, threshold, method, angle)
 
     # vv <- igraph::as_data_frame(H[["graph"]], "vertices")
     # H2 <- H[["homology"]][[3]]
