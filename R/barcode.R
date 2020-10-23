@@ -3,6 +3,7 @@
 #' @param Ydat A vector with the model's dependent variable.
 #' @param Xdat A matrix with the model's input variables.
 #' @param maxscale Maximum radius allowed to find the barcode.
+#' @param mc.cores Number of cores used to estimate the barcodes in parallel. (See \code{\link{mclapply}}).
 #'
 #' @return A plot with the barcode for each variable.
 #' @export
@@ -17,7 +18,7 @@
 #' X <- matrix(runif(3*100, -pi, pi), ncol = 3)
 #' Y <- ishigami.fun(X)
 #'
-#'barcode_plotter(Ydat = Y, Xdat = X, maxscale = 0.2)
+#'barcode_plotter(Ydat = Y, Xdat = X, maxscale = 0.2, mc.cores = 2)
 #'
 #' @importFrom stats median quantile
 #' @importFrom utils head
@@ -25,7 +26,8 @@
 
 barcode_plotter <- function(Ydat,
                             Xdat,
-                            maxscale = rep(0.05, ncol(Xdat))) {
+                            maxscale = rep(0.05, ncol(Xdat)),
+                            mc.cores = 2) {
   if (length(maxscale) == 1) {
     maxscale <- rep(maxscale, ncol(Xdat))
   } else if (length(maxscale) < ncol(Xdat)) {
@@ -35,9 +37,17 @@ barcode_plotter <- function(Ydat,
   Xdat <- as.data.frame(Xdat)
   Ydat <- as.data.frame(Ydat)
 
-  Xr <- as.data.frame(lapply(Xdat, scales::rescale))
-  Yr <- as.data.frame(lapply(Ydat, scales::rescale))
+  # Xr <- as.data.frame(lapply(Xdat, scales::rescale))
+  # Yr <- as.data.frame(lapply(Ydat, scales::rescale))
+  l <- lapply(seq_along(Xdat), function(k) {
+    scales::rescale(cbind(Xdat[, k], Ydat[, 1]))
+  })
 
+  lx <- lapply(l, function(x)
+    x[, 1])
+
+  Xr <- as.data.frame(do.call("cbind", lx))
+  Yr <- as.data.frame(sapply(Ydat, scales::rescale))
 
 
 
@@ -81,7 +91,7 @@ barcode_plotter <- function(Ydat,
           )
         )
       },
-      mc.cores = parallel::detectCores(logical = FALSE)
+      mc.cores = mc.cores
     ),silent = T)
 
   if(is(p,'try-error')){

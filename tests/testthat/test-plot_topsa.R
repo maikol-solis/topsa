@@ -1,4 +1,4 @@
-test_that("barcode_plotter works", {
+test_that("plot_topsa works", {
   linear.fun <- function(X) {
   -2 * X[, 1] +  X[, 2]
 }
@@ -10,10 +10,11 @@ X <- data.frame(
 )
 Y <- data.frame(linear.fun(X))
 
-p <- barcode_plotter(Ydat = Y,
-                    Xdat = X,
-                    maxscale = 0.1,
-                    mc.cores = 2)
+topsaObj <- topsa(Ydat = Y, Xdat = X)
+
+p <- plot_topsa(topsaObj)
 
 expect_s3_class(p, "ggplot")
 })
+
+

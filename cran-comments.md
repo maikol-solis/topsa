@@ -13,9 +13,11 @@ Maintainer: 'Maikol Sol�s <maikol.solis@ucr.ac.cr>'
 New submission
 
 Possibly mis-spelled words in DESCRIPTION:
-  Vietoris (23:137)
-  homology (23:181)
-  indices (23:45)
+  Vietoris (24:137)
+  WIP (24:443)
+  homology (24:181)
+  indices (24:45)
+  preprint (24:447)
 
 
 * checking for future file timestamps ... NOTE

@@ -49,36 +49,10 @@
 topsa <-
   function(Ydat,
            Xdat,
-           #threshold.area = 0.9,
-           threshold.radius = rep(0.05,ncol(Xdat)),
-           # knearest = 20,
-           method = "Alpha") {
-    #Arguments:
-    #Y: matrix of model outputs (only one column)
-    #X: matrix model parameters
-    #radius: radius to build the neighborhood graph
-    #dimension: number of homology spaces
-    #MAIN
-    # if (!requireNamespace("scales", quietly = TRUE)) {
-    #   stop("Please install the package scales: install.packages('scales')")
-    # }#end-require-scales
-    # if (!requireNamespace("igraph", quietly = TRUE)) {
-    #   stop("Please install the package igraph: install.packages('igraph')")
-    # }#end-require-igraph
-    # if (!requireNamespace("sf", quietly = TRUE)) {
-    #   stop("Please install the package sf: install.packages('sf')")
-    # }#end-require-sf
-    # # if (!requireNamespace("rgeos", quietly = TRUE)) {
-    # #   stop("Please install the package rgeos: install.packages('rgeos')")
-    # # }#end-require-rgeos
-    # if (!requireNamespace("pbmcapply", quietly = TRUE)) {
-    #   stop("Please install the package pbmcapply: install.packages('pbmcapply')")
-    # }#end-require-pbmcapply
-    # # if (!requireNamespace("multimode", quietly = TRUE)) {
-    # #   stop("Please install the package multimode: install.packages('multimode')")
-    # # }#end-require-multimode
-
-    # future::plan("multisession")
+           threshold.radius = rep(0.02, ncol(Xdat)),
+           method = "Alpha",
+           mc.cores = 2,
+           alpha = 0) {
     Xdat <- as.data.frame(Xdat)
     Ydat <- as.data.frame(Ydat)
 
@@ -86,8 +60,22 @@ topsa <-
     ANS[['call']] <- match.call()
     ANS[['Xdat']] <- Xdat
     ANS[['Ydat']] <- Ydat
-    ANS[['Xr']] <- as.data.frame(lapply(Xdat, scales::rescale))
-    ANS[['Yr']] <- as.data.frame(lapply(Ydat, scales::rescale))
+
+    Xr <- matrix()
+    Yr <- matrix()
+    l <- lapply(seq_along(Xdat), function(k) {
+      scales::rescale(cbind(Xdat[, k], Ydat[, 1]))
+    })
+
+    lx <- lapply(l, function(x)
+      x[, 1])
+
+    Xr <- as.data.frame(do.call("cbind", lx))
+    Yr <- as.data.frame(sapply(Ydat, scales::rescale))
+    ANS[['Xr']] <- Xr
+    ANS[['Yr']] <- Yr
+    ANS[['angle']] <- angle
+
     # ANS[['dimension']] <- dimension
 
     # message("Estimating persistance homology for each variable")
@@ -231,47 +219,31 @@ topsa <-
 
     message("Index estimation")
 
-    # cores <- parallel::detectCores(logical = FALSE)
-    # cl <- parallel::makeCluster(cores)
-    # parallel::clusterExport(cl,
-    #                         c('topsa:::estimate_sensitivity_index',
-    #                           'topsa:::VR_homology',
-    #                           'topsa:::estimate_symmetric_reflection',
-    #                           'Ydat',
-    #                           'Xdat',
-    #                           'threshold.radius',
-    #                           'method'
-    #                         ), envir=environment())
 
-
-     sensitivity_results <- try(parallel::mclapply(
-       X = 1:ncol(Xdat),
+    sensitivity_results <- try(parallel::mclapply(
+      X = 1:ncol(Xdat),
       FUN = estimate_sensitivity_index,
-       Ydat = Ydat,
-       Xdat = Xdat,
-    #   dimension = dimension,
-    #   knearest = knearest,
-       threshold = threshold.radius,
-       method = method,
-    mc.cores = parallel::detectCores(logical = FALSE)
-     ),
-     silent = T)
+      Ydat = Ydat,
+      Xdat = Xdat,
+      threshold = threshold.radius,
+      method = method,
+      mc.cores = mc.cores
+      angle = angle,
+    ),
+    silent = T)
 
 
 
-    if (is(sensitivity_results, 'try-error')){
+    if (is(sensitivity_results, 'try-error')) {
       sensitivity_results <-
         lapply(
-          # cl = cl,
           X = 1:ncol(Xdat),
           FUN = estimate_sensitivity_index,
           Ydat = Ydat,
           Xdat = Xdat,
-          # dimension = dimension,
-          # knearest = knearest,
-          # threshold.area = threshold.area,
           threshold = threshold.radius,
           method = method,
+          angle = angle
         )
     }
 
@@ -285,238 +257,138 @@ topsa <-
     class(ANS) <- 'topsa'
     return(ANS)
 
-    # SA.tab <- try(pbmcapply::pbmclapply(X = HOMOLOGY,
-    #                                     FUN = estimate_index,
-    #                                     mc.cores = nc),
-    #               silent = T
-    # )
-    #
-    # if (is(SA.tab, 'try-error')) {
-    #Windows does not support mclapply...
-
-    # }
-
-    #  sensitivity_table <- t(sapply(sensitivity_result, function(x) {
-    #   as.numeric(x[1:5])
-    # }))
-    #
-    # colnames(sensitivity_table) <- c('Radius', 'Manifold Area', 'Box Area' , 'Geometric correlation', 'Symmetric index')
-    # rownames(sensitivity_table) <- par.names
-    # ANS[['sensitivity_table']] <- sensitivity_table
 
   }
 
 estimate_sensitivity_index <- function(ivar,
-           Ydat,
-           Xdat,
-           dimension,
-           # knearest,
-           threshold, method) {
-    constructHOMOLOGY <-
-      function (ivar, Ydat, Xdat, dimension, threshold,method) {
-        Y <- as.matrix(Ydat)
-        X <- as.matrix(Xdat[, ivar])
+                                       Ydat,
+                                       Xdat,
+                                       dimension,
+                                       # knearest,
+                                       threshold,
+                                       method,
+                                       angle) {
+  constructHOMOLOGY <-
+    function (ivar,
+              Ydat,
+              Xdat,
+              dimension,
+              threshold,
+              method,
+              angle) {
+      Y <- as.matrix(Ydat)
+      X <- as.matrix(Xdat[, ivar])
 
-        idx <- order(X,Y)
-        X <- X[idx,]
-        Y<- Y[idx,]
+      idx <- order(X, Y)
+      X <- X[idx, ]
+      Y <- Y[idx, ]
 
-        X <- as.matrix(scales::rescale(X , to = c(0, 1)), ncol = 1)
-        Y <- as.matrix(scales::rescale(Y , to = c(0, 1)), ncol = 1)
-
-        if (method == "Alpha") {
-          Filtration <- TDA::alphaComplexFiltration(cbind(Y, X),printProgress = FALSE)
-          cmplx <- Filtration$cmplx[Filtration$values<=threshold[ivar]]
-        } else if(method=="VR"){
-          Filtration <-TDA::ripsFiltration(
-            cbind(Y, X),
-            maxdimension = 1,
-            maxscale = threshold[ivar],
-            printProgress = FALSE
-          )
-          cmplx <- Filtration$cmplx
-          }else{
-          Filtration <- NULL
-          stop("No method defined")
-        }
-
-
-        idx_triangles <- lengths(Filtration$cmplx) == 3
-        clq <- cmplx[idx_triangles]
-        # clq <- igraph::cliques(graphBase, min = 3, max = 3)
-        clq <- matrix(unlist(clq), ncol = 3, byrow = TRUE)
-        clq <- cbind(clq, clq[, 1])
-        clq <- clq[order(clq[, 1], -clq[, 2], clq[, 3]), ]
-
-        clq_list <-
-          try(parallel::mclapply(
-            X = seq_len(nrow(clq)),
-            FUN =  function(i) {
-              p <- sf::st_polygon(list(cbind(X[clq[i, ]], Y[clq[i, ]])))
-            },
-            mc.cores = parallel::detectCores(logical = FALSE)
-          ),silent = T)
+      XY <- scales::rescale(cbind(X, Y))
+      X <- XY[, 1]
+      Y <- XY[, 2]
+      meanX <- mean(X)
+      meanY <- mean(Y)
+      #Se centra para el calculo
+      XsYs <- data.frame(X - meanX, Y - meanY)
+      Rotated <- as.matrix(XsYs) %*% RotMat(-angle)
+      #Se descentra para el calculo
+      X <- Rotated[, 1] + meanX
+      Y <- Rotated[, 2] + meanY
 
 
-        if (is(clq_list, 'try-error')) {
-        clq_list <-
-          lapply(
-            X = seq_len(nrow(clq)),
-            FUN =  function(i) {
-              p <- sf::st_polygon(list(cbind(X[clq[i, ]], Y[clq[i, ]])))
-            }
-          )
-        }
+      if (method == "Alpha") {
+        Filtration <-
+          TDA::alphaComplexFiltration(cbind(Y, X), printProgress = FALSE)
+        cmplx <-
+          Filtration$cmplx[Filtration$values <= threshold[ivar]]
+      } else if (method == "VR") {
+        Filtration <- TDA::ripsFiltration(
+          cbind(Y, X),
+          maxdimension = 1,
+          maxscale = threshold[ivar],
+          printProgress = FALSE
+        )
+        cmplx <- Filtration$cmplx
+      } else{
+        Filtration <- NULL
+        stop("No method defined")
+      }
 
 
-        # message("Assemblying all the polygons and setting the manifold...")
-        clq_polygons <-sf::st_geometrycollection(clq_list)
+      idx_triangles <- lengths(Filtration$cmplx) == 3
+      clq <- cmplx[idx_triangles]
+      # clq <- igraph::cliques(graphBase, min = 3, max = 3)
+      clq <- matrix(unlist(clq), ncol = 3, byrow = TRUE)
+      clq <- cbind(clq, clq[, 1])
+      clq <- clq[order(clq[, 1], -clq[, 2], clq[, 3]),]
 
-        clq_polygons <- sf::st_collection_extract(clq_polygons)
-
-        grid_polygons <-
-          sf::st_make_grid(clq_polygons, cellsize = 0.01)
-
-        Number_Polygons <-
-          lengths(sf::st_intersects(grid_polygons, clq_polygons))
-
-        grid_polygons <-
-          sf::st_sf(grid_polygons, Number_Polygons = Number_Polygons)
-
-        clq_polygons <- sf::st_union(clq_polygons)
-
-        #
-        #         for (d in 1:dimension) {
-        #           clq <- igraph::cliques(graphBase, min = d, max = d)
-        #           clq <- matrix(unlist(clq),ncol = d,byrow = TRUE)
-        #           if (d == 1) {
-        #             H[[d]] <- st_multipoint(cbind(X[clq],Y[clq]))
-        #             })
-        #           } else if (d == 2) {
-        #
-        #             clq_list  <- purrr::map(clq, function(x) {
-        #               cbind(X[x], Y[x])
-        #             })
-        #             H[[d]] <-  sf::st_multilinestring(clq_list)
-        #           }
-        #           else{
-        #             clq_list  <- purrr::map(clq, function(x) {
-        #               list(cbind(X[c(x, x[1])], Y[c(x, x[1])]))
-        #             })
-        #
-        #             H[[d]] <-  sf::st_multipolygon(clq_list)
-        #           }
-        #         }
-
-
-
-
-
-        return(
-          list(
-            grid_polygons = grid_polygons,
-            manifold_unioned = clq_polygons,
-            # neigborhood.distance = neigborhood.distance,
-            threshold = threshold[ivar]
-            # Number.Edges.per.Point = npositives
-          )
+      clq_polygons <-
+        lapply(
+          X = seq_len(nrow(clq)),
+          FUN =  function(i) {
+            p <- data.frame(id = i, x = X[clq[i, ]], y = Y[clq[i, ]])
+          }
         )
 
+      clq_polygons <- do.call("rbind", clq_polygons)
 
-      } #end-function-constructor
-
-    Ydat <- as.matrix(Ydat)
-
-    H <- constructHOMOLOGY(ivar, Ydat, Xdat, dimension, threshold, method)
-
-    # vv <- igraph::as_data_frame(H[["graph"]], "vertices")
-    # H2 <- H[["homology"]][[3]]
-    # l <- list()
-    # idxObj <- sort(unique(as.numeric(H2)))
-    # Vertices <- data.frame (name = vv$name[idxObj],
-    #                         x = vv$x[idxObj],
-    #                         y = vv$y[idxObj])
-    #
-    # l <- furrr::future_map(1:nrow(H2),
-    #                        function(i) {
-    #                          idxTriangle <- H2[i,]
-    #                          idxname <-
-    #                            Vertices$name %in% c(idxTriangle, idxTriangle[1])
-    #                          subVertices <-  Vertices[idxname , ]
-    #                          subVertices <-
-    #                            rbind(subVertices, subVertices[1,])
-    #                          Triangle <-
-    #                            as.matrix((subVertices[, c(2, 3)]))
-    #                          rownames(Triangle) <- NULL
-    #                          p <- sf::st_polygon(list(Triangle))
-    #                        }, .progress = TRUE)
+      clq_polygons <-
+        sfheaders::sfc_polygon(clq_polygons, polygon_id = "id")
 
 
-    #     l <-  try(pbmcapply::pbmclapply(
-    #   X = 1:nrow(H2),
-    #   FUN = function(i) {
-    #     idxTriangle <- H2[i, ]
-    #     idxname <- Vertices$name %in% c(idxTriangle, idxTriangle[1])
-    #     subVertices <-  Vertices[idxname ,]
-    #     subVertices <- rbind(subVertices, subVertices[1, ])
-    #     Triangle <- as.matrix((subVertices[, c(2, 3)]))
-    #     rownames(Triangle) <- NULL
-    #     p <- sf::st_polygon(list(Triangle))
-    #   },
-    #   mc.cores = mc.cores.inner
-    # ),
-    # silent = T)
 
-    # if (is(l, 'try-error')) {
-    #   #Windows does not support mclapply...
-    #   l <- lapply(
-    #     X = 1:nrow(H2),
-    #     FUN = function(i) {
-    #       idxTriangle <- H2[i, ]
-    #       idxname <- Vertices$name %in% c(idxTriangle, idxTriangle[1])
-    #       subVertices <-  Vertices[idxname ,]
-    #       subVertices <- rbind(subVertices, subVertices[1, ])
-    #       Triangle <- as.matrix((subVertices[, c(2, 3)]))
-    #       rownames(Triangle) <- NULL
-    #       p <- sf::st_polygon(list(Triangle))
-    #     }
-    #   )
-    # }
-
-    # mp <- sf::st_multipolygon(l)
-    #mp_union <- sf::st_buffer(sf::st_union(mp),0)
-    #
-
-    # mp_union <- sf::st_simplify(H[["homology"]][[3]])
-
-    mp_union <- H[["manifold_unioned"]]
-
-    mp_reflection <- estimate_symmetric_reflection(mp_union)
-
-    bb <- sf::st_make_grid(x = mp_union, n = 1)
-
-    mp_sym_difference <-
-      sf::st_sym_difference(mp_union, mp_reflection)
+      clq_polygons <- sf::st_union(clq_polygons)
+      clq_polygons <- sf::st_cast(clq_polygons, "POLYGON")
+      clq_polygons <- clq_polygons[sf::st_area(clq_polygons) > 0.01]
+      clq_polygons <- sf::st_buffer(clq_polygons, -0.01)
+      clq_polygons <- sf::st_buffer(clq_polygons, 0.01)
+      clq_polygons <- sf::st_union(clq_polygons)
 
 
-    Symmetric.Diff.Area <- sf::st_area(mp_sym_difference)
-    Manifold.Area <- sf::st_area(mp_union)
-    Box.Area <- sf::st_area(bb)
 
-    return(
-      list(
-        threshold = H[["threshold"]],
-        Number.Edges.per.Point = H[["Number.Edges.per.Point"]],
-        Neigborhood.Distance = H[["neigborhood.distance"]],
-        Manifold.Area = Manifold.Area,
-        Box.Area = Box.Area,
-        Geometric.R2 = 1 - Manifold.Area / Box.Area,
-        Symmetric.Diff.Area = Symmetric.Diff.Area,
-        Geometric.Sensitivity = Symmetric.Diff.Area / (2 * Manifold.Area),
-        homology = H
+      return(
+        list(
+          grid_polygons = grid_polygons,
+          manifold_unioned = clq_polygons,
+          # neigborhood.distance = neigborhood.distance,
+          threshold = threshold[ivar]
+          # Number.Edges.per.Point = npositives
+        )
       )
-    )
+
+    } #end-function-constructor
+
+
+
+  H <-
+    constructHOMOLOGY(ivar, Ydat, Xdat, dimension, threshold, method, angle) {
+      mp_union <- H[["manifold_unioned"]]
+
+      mp_reflection <- estimate_symmetric_reflection(mp_union)
+
+      bb <- sf::st_make_grid(x = mp_union, n = 1)
+
+      mp_sym_difference <-
+        sf::st_sym_difference(mp_union, mp_reflection)
+
+
+      Symmetric.Diff.Area <- sf::st_area(mp_sym_difference)
+      Manifold.Area <- sf::st_area(mp_union)
+      Box.Area <- sf::st_area(bb)
+
+      return(
+        list(
+          threshold = H[["threshold"]],
+          Number.Edges.per.Point = H[["Number.Edges.per.Point"]],
+          Neigborhood.Distance = H[["neigborhood.distance"]],
+          Manifold.Area = Manifold.Area,
+          Box.Area = Box.Area,
+          Geometric.R2 = 1 - Manifold.Area / Box.Area,
+          Symmetric.Diff.Area = Symmetric.Diff.Area,
+          Geometric.Sensitivity = Symmetric.Diff.Area / (2 * Manifold.Area),
+          homology = H
+        )
+      )
+    }
+
 }
-
-
-

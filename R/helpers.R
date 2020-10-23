@@ -21,3 +21,7 @@ estimate_symmetric_reflection <- function(polygon) {
 
 
 
+RotMat <- function(angle) {
+  matrix(c(cos(angle), -sin(angle), sin(angle), cos(angle)), nrow = 2, ncol =
+           2)
+}
