@@ -79,6 +79,19 @@ topsa_full_rotation_stats <- function(topsaRotationDF) {
 
 
 
+topsa_full_rotation_test <- function(topsaRotationDF) {
+  #usar otras pruebaa¿?
+  variables <- as.vector(unique(topsaRotationDF$variable))
+  results <- lapply(variables, function(i){
+    vect <- topsaRotationDF %>% dplyr::filter(variable==i) %>% dplyr::select(index)
+    ks.test(vect,"punif",min(vect),max(vect))
+  })
+  names(results) <- variables
+  results
+}
+#topsa_full_rotation_test(estimation)
+
+
 
 
 
