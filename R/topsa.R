@@ -52,7 +52,7 @@ topsa <-
            threshold.radius = rep(0.02, ncol(Xdat)),
            method = "Alpha",
            mc.cores = 2,
-           alpha = 0) {
+           angle = 0) {
     Xdat <- as.data.frame(Xdat)
     Ydat <- as.data.frame(Ydat)
 
@@ -227,9 +227,8 @@ topsa <-
       Xdat = Xdat,
       threshold = threshold.radius,
       method = method,
-      mc.cores = mc.cores
-      angle = angle,
-    ),
+      mc.cores = mc.cores,
+      angle = angle),
     silent = T)
 
 
@@ -277,7 +276,7 @@ estimate_sensitivity_index <- function(ivar,
               method,
               angle) {
       Y <- as.matrix(Ydat)
-      X <- as.matrix(Xdat[, ivar])
+      X <- as.matrix(Xdat[,ivar])#CAMBIO
 
       idx <- order(X, Y)
       X <- X[idx, ]
@@ -348,7 +347,6 @@ estimate_sensitivity_index <- function(ivar,
 
       return(
         list(
-          grid_polygons = grid_polygons,
           manifold_unioned = clq_polygons,
           # neigborhood.distance = neigborhood.distance,
           threshold = threshold[ivar]
@@ -360,8 +358,7 @@ estimate_sensitivity_index <- function(ivar,
 
 
 
-  H <-
-    constructHOMOLOGY(ivar, Ydat, Xdat, dimension, threshold, method, angle) {
+  H <- constructHOMOLOGY(ivar, Ydat, Xdat, dimension, threshold, method, angle)
       mp_union <- H[["manifold_unioned"]]
 
       mp_reflection <- estimate_symmetric_reflection(mp_union)
@@ -389,6 +386,6 @@ estimate_sensitivity_index <- function(ivar,
           homology = H
         )
       )
-    }
+
 
 }
