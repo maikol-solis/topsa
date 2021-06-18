@@ -61,19 +61,21 @@ topsa <-
     ANS[['Xdat']] <- Xdat
     ANS[['Ydat']] <- Ydat
 
-    Xr <- matrix()
-    Yr <- matrix()
-    l <- lapply(seq_along(Xdat), function(k) {
-      scales::rescale(cbind(Xdat[, k], Ydat[, 1]))
-    })
-
-    lx <- lapply(l, function(x)
-      x[, 1])
-
-    Xr <- as.data.frame(do.call("cbind", lx))
-    Yr <- as.data.frame(sapply(Ydat, scales::rescale))
-    ANS[['Xr']] <- Xr
-    ANS[['Yr']] <- Yr
+    # Xr <- matrix()
+    # Yr <- matrix()
+    # l <- lapply(seq_along(Xdat), function(k) {
+    #   scales::rescale(cbind(Xdat[, k], Ydat[, 1]))
+    # })
+    #
+    # lx <- lapply(l, function(x)
+    #   x[, 1])
+    #
+    # Xr <- as.data.frame(do.call("cbind", lx))
+    # Yr <- as.data.frame(sapply(Ydat, scales::rescale))
+    # ANS[['Xr']] <- Xr
+    # ANS[['Yr']] <- Yr
+    ANS[['Xr']] <- as.data.frame(lapply(Xdat, scales::rescale))
+    ANS[['Yr']] <- as.data.frame(lapply(Ydat, scales::rescale))
     ANS[['angle']] <- angle
 
     # ANS[['dimension']] <- dimension
@@ -220,20 +222,20 @@ topsa <-
     message("Index estimation")
 
 
-    sensitivity_results <- try(parallel::mclapply(
-      X = 1:ncol(Xdat),
-      FUN = estimate_sensitivity_index,
-      Ydat = Ydat,
-      Xdat = Xdat,
-      threshold = threshold.radius,
-      method = method,
-      mc.cores = mc.cores,
-      angle = angle),
-    silent = T)
+    # sensitivity_results <- try(parallel::mclapply(
+    #   X = 1:ncol(Xdat),
+    #   FUN = estimate_sensitivity_index,
+    #   Ydat = Ydat,
+    #   Xdat = Xdat,
+    #   threshold = threshold.radius,
+    #   method = method,
+    #   mc.cores = mc.cores,
+    #   angle = angle),
+    # silent = T)
 
 
 
-    if (is(sensitivity_results, 'try-error')) {
+    # if (is(sensitivity_results, 'try-error')) {
       sensitivity_results <-
         lapply(
           X = 1:ncol(Xdat),
@@ -244,7 +246,7 @@ topsa <-
           method = method,
           angle = angle
         )
-    }
+    # }
 
 
     for (i in 1:ncol(Xdat)) {
@@ -282,17 +284,25 @@ estimate_sensitivity_index <- function(ivar,
       X <- X[idx, ]
       Y <- Y[idx, ]
 
-      XY <- scales::rescale(cbind(X, Y))
-      X <- XY[, 1]
-      Y <- XY[, 2]
-      meanX <- mean(X)
-      meanY <- mean(Y)
-      #Se centra para el calculo
-      XsYs <- data.frame(X - meanX, Y - meanY)
-      Rotated <- as.matrix(XsYs) %*% RotMat(-angle)
-      #Se descentra para el calculo
-      X <- Rotated[, 1] + meanX
-      Y <- Rotated[, 2] + meanY
+      YX <- scales::rescale(cbind(Y, X))
+      Y <- YX[, 1]
+      X <- YX[, 2]
+      # X <- as.matrix(scales::rescale(X , to = c(0, 1)), ncol = 1)
+      # Y <- as.matrix(scales::rescale(Y , to = c(0, 1)), ncol = 1)
+
+      # meanX <- mean(X)
+      # meanY <- mean(Y)
+      # #Se centra para el calculo
+      # XsYs <- data.frame(X - meanX, Y - meanY)
+      # Rotated <- as.matrix(XsYs) %*% RotMat(-angle)
+      # #Se descentra para el calculo
+      # X <- Rotated[, 1] + meanX
+      # Y <- Rotated[, 2] + meanY
+      #
+      # YX <- scales::rescale(cbind(Y, X))
+      # Y <- YX[, 1]
+      # X <- YX[, 2]
+
 
 
       if (method == "Alpha") {
@@ -368,6 +378,9 @@ estimate_sensitivity_index <- function(ivar,
       mp_sym_difference <-
         sf::st_sym_difference(mp_union, mp_reflection)
 
+
+      H$sym_difference <- mp_sym_difference
+      H$sym_reflection <- mp_reflection
 
       Symmetric.Diff.Area <- sf::st_area(mp_sym_difference)
       Manifold.Area <- sf::st_area(mp_union)

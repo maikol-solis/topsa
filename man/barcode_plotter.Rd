@@ -4,12 +4,7 @@
 \alias{barcode_plotter}
 \title{Barcode plotter}
 \usage{
-barcode_plotter(
-  Ydat,
-  Xdat,
-  maxscale = rep(0.05, ncol(Xdat)),
-  mc.cores = parallel::detectCores(logical = FALSE)
-)
+barcode_plotter(Ydat, Xdat, maxscale = rep(0.05, ncol(Xdat)), mc.cores = 2)
 }
 \arguments{
 \item{Ydat}{A vector with the model's dependent variable.}

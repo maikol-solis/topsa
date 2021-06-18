@@ -4,13 +4,13 @@ test_that("plot_topsa works", {
 }
 
 X <- data.frame(
-  X1 = runif(20, -1, 1),
-  X2 = runif(20, -1, 1),
-  X3 = runif(20, -1, 1)
+  X1 = runif(100, -1, 1),
+  X2 = runif(100, -1, 1),
+  X3 = runif(100, -1, 1)
 )
 Y <- data.frame(linear.fun(X))
 
-topsaObj <- topsa(Ydat = Y, Xdat = X)
+topsaObj <- topsa(Ydat = Y, Xdat = X, method = "Alpha")
 
 p <- plot_topsa(topsaObj)
 

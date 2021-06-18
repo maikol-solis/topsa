@@ -4,7 +4,14 @@
 \alias{topsa}
 \title{Topological Sensitivity Analysis}
 \usage{
-topsa(Ydat, Xdat, threshold.radius = rep(0.05, ncol(Xdat)), method = "Alpha")
+topsa(
+  Ydat,
+  Xdat,
+  threshold.radius = rep(0.02, ncol(Xdat)),
+  method = "Alpha",
+  mc.cores = 2,
+  angle = 0
+)
 }
 \arguments{
 \item{Ydat}{numeric vector of responses in a model.}

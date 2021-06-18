@@ -11,7 +11,6 @@
 #' @return A plot of generated with the output of \code{topsa}. For each
 #' variable in the model, it creates the plot of the corresponding manifold, its
 #' symmetric reflection and its symmetric difference.
-#' @export
 #'
 #' @examples
 #'
@@ -27,7 +26,7 @@
 #' estimation <- topsa(Ydat = Y, Xdat = X)
 #'
 #' plot_topsa(estimation)
-
+#' @export
 plot_topsa <- function(topsaObj,
                           nvar = "all",
                           ...) {
@@ -44,7 +43,6 @@ plot_topsa <- function(topsaObj,
   } else if (!is.numeric(nvar)) {
     message("Please enter 'all' or vector of values to plot.")
   }
-
 
 
 
@@ -78,13 +76,18 @@ plot_topsa <- function(topsaObj,
         sf::st_sf(
           variable = colnames(topsaObj$Xdat)[k],
           alpha = 0.5,
-          object_type = "DataPoints",
+          object_type = "Data Points",
           geom = sf::st_geometry(datapoints)
         )
       )
 
   }
 
+
+  manifold.all$object_type <- factor(manifold.all$object_type,
+                                                    c("Bounding Box",
+                                                      "Manifold",
+                                                      "Data Points"))
 
   plotManifold <- ggplot2::ggplot() +
     ggplot2::geom_sf(
@@ -101,7 +104,7 @@ plot_topsa <- function(topsaObj,
         "Sym. Reflection" =  "#1f78b4",
         "Intersection" = "#b2df8a",
         "Bounding Box" = NA,
-        "DataPoints" = NA
+        "Data Points" = NA
       ),
       breaks = c("Manifold" ,
                  "Sym. Reflection",
@@ -116,7 +119,7 @@ plot_topsa <- function(topsaObj,
         "Sym. Reflection" =  1,
         "Intersection" = 1,
         "Bounding Box" = 2,
-        "DataPoints" = 0.1
+        "Data Points" = 0.1
       ),
       guide = FALSE
     ) +
@@ -127,7 +130,7 @@ plot_topsa <- function(topsaObj,
         "Sym. Reflection" = "#a6cee3",
         "Intersection" = "#33a02c",
         "Bounding Box" = "#e31a1c",
-        "DataPoints" = ggplot2::alpha("black",0.4)
+        "Data Points" = ggplot2::alpha("black",0.4)
       ),
       guide = FALSE
     ) +
@@ -135,7 +138,7 @@ plot_topsa <- function(topsaObj,
     ggplot2::coord_sf() +
     ggplot2::theme_minimal() +
     ggplot2::theme(
-      aspect.ratio = 1,
+      # aspect.ratio = 1,
       # panel.spacing = ggplot2::unit(1, "lines"),
       strip.background = ggplot2::element_rect(fill = "grey95"),
       # strip.placement = "outside"
@@ -145,6 +148,8 @@ plot_topsa <- function(topsaObj,
   return(plotManifold)
 }
 
+#' Plot symmetric reflections
+#' @export
 plot_sym_reflection <- function(topsaObj,
                                 nvar = "all",
                                 ...) {
@@ -161,8 +166,6 @@ plot_sym_reflection <- function(topsaObj,
   } else if (!is.numeric(nvar)) {
     message("Please enter 'all' or vector of values to plot.")
   }
-
-
 
 
   manifold.sym.reflection.all <- NULL
@@ -188,6 +191,12 @@ plot_sym_reflection <- function(topsaObj,
         sf::st_sf(
           variable = colnames(topsaObj$Xdat)[k],
           alpha_var = 1,
+          object_type = "Data Points",
+          geom = sf::st_geometry(datapoints)
+        ),
+        sf::st_sf(
+          variable = colnames(topsaObj$Xdat)[k],
+          alpha_var = 1,
           object_type = "Bounding Box",
           geom = sf::st_geometry(boundingbox)
         ),
@@ -205,20 +214,22 @@ plot_sym_reflection <- function(topsaObj,
         ),
         sf::st_sf(
           variable = colnames(topsaObj$Xdat)[k],
-          alpha_var = 0,
+          alpha_var = 1,
           object_type = "Intersection",
           geom = sf::st_geometry(manifold_intersection)
-        ),
-        sf::st_sf(
-          variable = colnames(topsaObj$Xdat)[k],
-          alpha_var = 0.5,
-          object_type = "DataPoints",
-          geom = sf::st_geometry(datapoints)
         )
       )
 
+
   }
 
+
+  manifold.sym.reflection.all$object_type <- factor(manifold.sym.reflection.all$object_type,
+                                                    c("Bounding Box",
+                                                      "Manifold",
+                                                      "Sym. Reflection",
+                                                      "Intersection",
+                                                      "Data Points"))
 
   plotSymmetricReflection <- ggplot2::ggplot() +
     ggplot2::geom_sf(
@@ -227,15 +238,16 @@ plot_sym_reflection <- function(topsaObj,
                    color = object_type),
       shape = 20
     ) +
+    ggplot2::stat_sf_coordinates()+
     ggplot2::facet_wrap( ~ variable, ncol = 3) +
     ggplot2::scale_fill_manual(
       name = "Estimated Areas",
       values = c(
-        "Manifold" = "#a6cee3",
-        "Sym. Reflection" =  "#1f78b4",
-        "Intersection" = "#b2df8a",
         "Bounding Box" = NA,
-        "DataPoints" = NA
+        "Sym. Reflection" =  "#1f78b4",
+        "Manifold" = "#a6cee3",
+        "Intersection" = "gray95",
+        "Data Points" = NA
       ),
       breaks = c("Manifold" ,
                  "Sym. Reflection",
@@ -250,7 +262,7 @@ plot_sym_reflection <- function(topsaObj,
         "Manifold" = 1,
         "Sym. Reflection" =  1,
         "Intersection" = 1,
-        "DataPoints" = NA
+        "Data Points" = 1
       ),
       guide = FALSE
     ) +
@@ -259,19 +271,20 @@ plot_sym_reflection <- function(topsaObj,
       values = c(
         "Manifold" = "#1f78b4",
         "Sym. Reflection" = "#a6cee3",
-        "Intersection" = "#33a02c",
+        "Intersection" = "gray50",
         "Bounding Box" = "#e31a1c",
-        "DataPoints" = ggplot2::alpha("black",0.4)
+        "Data Points" = ggplot2::alpha("black",0.4)
       ),
       guide = FALSE
     ) +
+    ggplot2:: scale_alpha(guide=FALSE) +
     # ggplot2::facet_wrap( ~ variable, ncol = 3) +
     ggplot2::coord_sf()  +
     ggplot2::theme_minimal() +
     ggplot2::theme(
-      aspect.ratio = 1,
+      # aspect.ratio = 0,
       # panel.spacing = ggplot2::unit(1, "lines"),
-      strip.background = ggplot2::element_rect(fill = "grey95"),
+      strip.background = ggplot2::element_rect(fill = "grey95")
     )
 
 
